@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Sign in to BBYDI</title>
+  <style>
+    /* Reset & Base Styles */
+    body, table, td, a { text-size-adjust: 100%; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    table { border-collapse: collapse !important; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+    /* Custom Utilities */
+    .wrapper { width: 100%; table-layout: fixed; background-color: #f4f5f7; padding-top: 40px; padding-bottom: 40px; }
+    .container { max-width: 520px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #eaecf0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .content { padding: 40px; }
+    .header { text-align: center; padding-bottom: 24px; }
+    .logo { font-size: 24px; font-weight: 700; color: #8E1005; text-decoration: none; letter-spacing: -0.5px; }
+    .title { font-size: 20px; font-weight: 600; color: #8E1005; margin: 0 0 16px 0; text-align: center; }
+    .text { font-size: 15px; line-height: 24px; color: #475467; margin: 0 0 24px 0; text-align: center; }
+    
+    /* Button Wrapper for perfect centering & compatibility */
+    .btn-container { text-align: center; margin-top: 32px; margin-bottom: 32px; }
+    .btn { background-color: #8E1005; border-radius: 6px; color: #ffffff !important; display: inline-block; font-size: 15px; font-weight: 600; line-height: 48px; text-align: center; text-decoration: none; width: 220px; -webkit-text-size-adjust: none; mso-padding-alt: 0; }
+    
+    /* Footer & Fallback Link */
+    .fallback-box { background-color: #f8f9fa; border-radius: 6px; padding: 16px; margin-top: 24px; border: 1px dashed #d0d5dd; word-break: break-all; }
+    .fallback-text { font-size: 12px; line-height: 18px; color: #667085; margin: 0; }
+    .fallback-link { color: #4f46e5; text-decoration: underline; }
+    .footer { text-align: center; padding-top: 32px; font-size: 13px; line-height: 20px; color: #98a2b3; }
+  </style>
+</head>
+<body>
+  <table border="0" cellpadding="0" cellspacing="0" class="wrapper">
+    <tr>
+      <td>
+        <table border="0" cellpadding="0" cellspacing="0" class="container">
+          <tr>
+            <td class="content">
+              <!-- App Logo / Name Header -->
+              <div class="header">
+                <a href="https://yourwebsite.com" class="logo">BBYDI</a>
+              </div>
+              
+              <!-- Core Message -->
+              <h1 class="title">Sign in to your account</h1>
+              <p class="text">Click the button below to instantly securely log into your account. No password required.</p>
+              
+              <!-- Action Button -->
+              <div class="btn-container">
+                <!--[if mso]>
+                <v:roundedrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{magic_link}}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="13%" stroke="f" fillcolor="#4f46e5">
+                  <w:anchorlock/>
+                  <center style="color:#ffffff;font-family:sans-serif;font-size:15px;font-weight:bold;">Sign In Instantly</center>
+                </v:roundedrect>
+                <![endif]-->
+                <a href="{{magic_link}}" class="btn" style="mso-hide:all;">Sign In Instantly</a>
+              </div>
+              
+              <!-- Link Expiry Notice -->
+              <p class="text" style="font-size: 14px; color: #667085;">
+                ⏰ This link is valid for <strong>1 hour</strong> and can only be used once.
+              </p>
+              
+              <!-- Fallback Plain Link -->
+              <div class="fallback-box">
+                <p class="fallback-text">
+                  If the button isn't working, copy and paste this absolute link into your web browser:
+                </p>
+                <p class="fallback-text" style="margin-top: 8px;">
+                  <a href="{{magic_link}}" class="fallback-link">{{magic_link}}</a>
+                </p>
+              </div>
+
+              <!-- Security Disclaimer -->
+              <p class="fallback-text" style="text-align: center; margin-top: 32px;">
+                Didn't request this login email? You can safely ignore it.
+              </p>
+            </td>
+          </tr>
+        </table>
+        
+        <!-- Outside Footer -->
+        <table border="0" cellpadding="0" cellspacing="0" align="center" style="max-width: 520px; width: 100%;">
+          <tr>
+            <td class="footer">
+              <p style="margin: 0;">Sent by BBYDI • 2 Crescent road, along Noktel hotel, GRA, Ilorin, Kwara state.</p>
+              <p style="margin: 4px 0 0 0;">To protect your account, do not forward this email to anyone.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

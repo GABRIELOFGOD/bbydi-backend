@@ -6,8 +6,11 @@ export type UserType = {
   name: string;
   password: string;
   role: UserRole;
+  position: string;
+  avatar?: string;
   isVerified: boolean;
   isBlocked: boolean;
+  createdBy: UserType | undefined;
 };
 
 const UserSchema: Schema<UserType> = new Schema(
@@ -25,6 +28,14 @@ const UserSchema: Schema<UserType> = new Schema(
       type: String,
       select: false
     },
+    position: {
+      type: String,
+      default: ""
+    },
+    avatar: {
+      type: String,
+      nullable: true,
+    },
     role: {
       type: String,
       enum: Object.values(UserRole),
@@ -37,7 +48,12 @@ const UserSchema: Schema<UserType> = new Schema(
     isBlocked: {
       type: Boolean,
       default: false
-    }
+    },
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      select: false
+    },
   },
   { timestamps: true }
 );

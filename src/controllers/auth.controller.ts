@@ -26,17 +26,13 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     return res.status(HTTP_STATUS.CONFLICT).json({ message: "User already exists" });
   }
 
-  const newUser = await UserModel.create({ email, name, role: UserRole.STAFF });
+  const newUser = await UserModel.create({ email, name, role: UserRole.STAFF, createdBy: req.user });
   const magicToken = tokenGenerator({ userId: newUser._id }, process.env.MAGIC_SECRET!, process.env.MAGIC_EXPIRATION!);
   const magicLink = `${process.env.FRONTEND_URL}/auth/magic?token=${magicToken}`;
 
-  // TODO: remove log
-  console.log("Secret", magicToken);
-
   await magicMailer(newUser.email, magicLink);
 
-  // TODO: remove magicToken
-  return res.status(HTTP_STATUS.CREATED).json({ message: "User registered successfully", user: newUser, magicToken });
+  return res.status(HTTP_STATUS.CREATED).json({ message: "User registered successfully", user: newUser });
 });
 
 export const magicLinkAuth = catchAsync(async (req: Request, res: Response) => {
@@ -80,12 +76,12 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   const user = await User.findOne({ email }).select("+password");
   if (!user) return responder(res, HTTP_STATUS.BAD_REQUEST, "Invalid credentials");
 
-  if (!user.isVerified) return responder(res, HTTP_STATUS.UNAUTHORIZED, "Please verify user account using the link sent to email");
+  if (!user.isVerified) return responder(res, HTTP_STATUS.FORBIDDEN, "Please verify user account using the link sent to email");
 
   const isCorrectPassword = await comparePassword(password, user.password);
   if (!isCorrectPassword) return responder(res, HTTP_STATUS.BAD_REQUEST, "Invalid credentials")
 
-  if (user.isBlocked) return responder(res, HTTP_STATUS.UNAUTHORIZED, "This user account has been blocked, please reach out to an administrator to remove the restrictions");
+  if (user.isBlocked) return responder(res, HTTP_STATUS.FORBIDDEN, "This user account has been blocked, please reach out to an administrator to remove the restrictions");
 
   const token = tokenGenerator({ userId: user.id }, process.env.JWT_SECRET!, "100d");
 

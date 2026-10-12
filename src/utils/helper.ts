@@ -49,11 +49,14 @@ export const comparePassword = async (password: string, hashedPassword: string) 
   return await compare(password, hashedPassword);
 }
 
-export const fileUploader = async (files: Express.Multer.File[]): Promise<string[]> => {
+export const fileUploader = async (
+  files: Express.Multer.File[],
+  resourceType: "image" | "raw" = "image",
+): Promise<string[]> => {
   try {
     const urls: string[] = [];
     for (const file of files) {
-      const result = await cloudinary.uploader.upload(file.path);
+      const result = await cloudinary.uploader.upload(file.path, { resource_type: resourceType });
       urls.push(result.secure_url);
     }
 

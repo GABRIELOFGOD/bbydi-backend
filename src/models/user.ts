@@ -2,6 +2,7 @@ import mongoose, { Model, Schema } from "mongoose";
 import { UserRole } from "../utils/types";
 
 export type UserType = {
+  _id?: mongoose.Types.ObjectId;
   email: string;
   name: string;
   password: string;

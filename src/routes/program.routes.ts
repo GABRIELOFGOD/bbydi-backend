@@ -12,7 +12,7 @@ router.get("/", getPrograms);
 router.get("/all", authMiddleware, getAllPrograms);
 router.route("/:id")
   .get(getOneProgram)
-  .patch(authMiddleware, authorizeRoles(UserRole.ADMIN), updateOneProgram)
+  .patch(authMiddleware, authorizeRoles(UserRole.ADMIN), upload.single("image"), updateOneProgram)
   .delete(authMiddleware, authorizeRoles(UserRole.ADMIN), deleteProgram)
 
 export default router;

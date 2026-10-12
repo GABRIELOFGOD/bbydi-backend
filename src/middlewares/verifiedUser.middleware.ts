@@ -36,7 +36,7 @@ export const authMiddleware = catchAsync(async (req: Request, res: Response, nex
       return res.status(401).json({ message: "Invalid authorization token" });
     }
 
-    const user = await User.findById(payload.userId).select("+password");
+    const user = await User.findById(payload.userId);
 
     if (!user) {
       return res.status(401).json({ message: "User account not found" });

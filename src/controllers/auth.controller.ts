@@ -35,6 +35,75 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.CREATED).json({ message: "User registered successfully", user: newUser });
 });
 
+export const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!isValidEmail(email)) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: "Invalid email address" });
+  }
+
+  const user = await User.findOne({ email });
+  if (user) {
+    const magicToken = tokenGenerator({ userId: user._id }, process.env.MAGIC_SECRET!, process.env.MAGIC_EXPIRATION!);
+    const magicLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${magicToken}`;
+    await magicMailer(user.email, magicLink);
+  }
+
+  return res.status(HTTP_STATUS.OK).json({ message: "If an account exists for this email, a password reset link has been sent" });
+});
+
+export const updateCurrentUser = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?._id;
+  if (!userId) return responder(res, HTTP_STATUS.UNAUTHORIZED, "Please login to your account");
+
+  const { name, email, position, avatar } = req.body;
+  if (email !== undefined && !isValidEmail(email)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Please provide a valid email address");
+  }
+  if (name !== undefined && (typeof name !== "string" || !name.trim())) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Name cannot be empty");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) return responder(res, HTTP_STATUS.NOT_FOUND, "User account not found");
+
+  if (email && email !== user.email) {
+    const duplicate = await User.findOne({ email, _id: { $ne: userId } });
+    if (duplicate) return responder(res, HTTP_STATUS.CONFLICT, "That email address is already in use");
+    user.email = email;
+  }
+  if (name !== undefined) user.name = name.trim();
+  if (position !== undefined) user.position = position;
+  if (avatar !== undefined) user.avatar = avatar;
+
+  await user.save();
+  const safeUser = { ...user.toObject(), password: undefined, createdBy: undefined };
+  return res.status(HTTP_STATUS.OK).json({ message: "Profile updated", user: safeUser });
+});
+
+export const changeCurrentPassword = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?._id;
+  if (!userId) return responder(res, HTTP_STATUS.UNAUTHORIZED, "Please login to your account");
+
+  const { currentPassword, newPassword } = req.body;
+  if (typeof currentPassword !== "string" || typeof newPassword !== "string" || !currentPassword || !newPassword) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Enter your current password and a new password");
+  }
+  if (!isStrongPassword(newPassword)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Please choose a stronger password");
+  }
+
+  const user = await User.findById(userId).select("+password");
+  if (!user || !user.password) return responder(res, HTTP_STATUS.NOT_FOUND, "User account not found");
+  if (!(await comparePassword(currentPassword, user.password))) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Current password is incorrect");
+  }
+
+  user.password = await hashPassword(newPassword);
+  await user.save();
+  return res.status(HTTP_STATUS.OK).json({ message: "Password updated successfully" });
+});
+
 export const magicLinkAuth = catchAsync(async (req: Request, res: Response) => {
   const { token } = req.params;
   const { password } = req.body;

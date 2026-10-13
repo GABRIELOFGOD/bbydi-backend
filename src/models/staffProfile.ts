@@ -7,6 +7,7 @@ export type StaffProfileType = {
   image?: string;
   category: "leadership" | "staff";
   active: boolean;
+  displayOrder: number;
 };
 
 const StaffProfileSchema = new Schema<StaffProfileType>({
@@ -16,6 +17,7 @@ const StaffProfileSchema = new Schema<StaffProfileType>({
   image: String,
   category: { type: String, enum: ["leadership", "staff"], default: "staff" },
   active: { type: Boolean, default: true },
+  displayOrder: { type: Number, min: 0, default: 0 },
 }, { timestamps: true });
 
 StaffProfileSchema.index(

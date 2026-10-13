@@ -3,16 +3,48 @@ import { Response } from "express";
 import * as jwt from "jsonwebtoken";
 import cloudinary from "../config/cloudinary";
 import multer from "multer";
+import { unlink } from "node:fs/promises";
 // import * as bcrypt from "bcryptjs";
 
 
 const storage = multer.diskStorage({
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}`);
   }
 });
 
 export const upload = multer({ storage: storage });
+
+const allowedContentTypes: Record<string, string[]> = {
+  image: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+  document: [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ],
+};
+
+export const contentUpload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+    files: 2,
+    fieldSize: 1024 * 1024,
+    fields: 30,
+    parts: 32,
+  },
+  fileFilter: (_req, file, callback) => {
+    if (!allowedContentTypes[file.fieldname]?.includes(file.mimetype)) {
+      const error = new Error(`Unsupported ${file.fieldname} file type`) as Error & { statusCode: number };
+      error.statusCode = 400;
+      callback(error);
+      return;
+    }
+    callback(null, true);
+  },
+});
 
 export const createMagicLink = (userId: string, token: string): string => {
   const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -53,15 +85,14 @@ export const fileUploader = async (
   files: Express.Multer.File[],
   resourceType: "image" | "raw" = "image",
 ): Promise<string[]> => {
-  try {
-    const urls: string[] = [];
-    for (const file of files) {
+  const urls: string[] = [];
+  for (const file of files) {
+    try {
       const result = await cloudinary.uploader.upload(file.path, { resource_type: resourceType });
       urls.push(result.secure_url);
+    } finally {
+      await unlink(file.path);
     }
-
-    return urls
-  } catch (error) {
-    throw error;
   }
+  return urls;
 }

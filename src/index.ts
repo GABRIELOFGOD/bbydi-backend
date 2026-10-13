@@ -28,7 +28,7 @@ const initialize = () => {
   return initialization;
 };
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
   origin: process.env.FRONTEND_URL,

@@ -7,6 +7,7 @@ import { UserRole } from "../utils/types";
 import { fileUploader, responder, tokenGenerator } from "../utils/helper";
 import { magicMailer } from "../utils/mailer";
 import StaffProfile from "../models/staffProfile";
+import mongoose from "mongoose";
 
 export const createStaffProfile = catchAsync(async (req: Request, res: Response) => {
   const admin = req.user;
@@ -61,13 +62,40 @@ export const updateStaffAccount = catchAsync(async (req: Request, res: Response)
 });
 
 export const getPublicStaffProfiles = catchAsync(async (_req: Request, res: Response) => {
-  const profiles = await StaffProfile.find({ active: true }).sort({ category: 1, position: 1 });
+  const profiles = await StaffProfile.find({ active: true }).sort({ category: 1, displayOrder: 1, name: 1 });
   return res.status(HTTP_STATUS.OK).json(profiles);
 });
 
 export const getAllStaffProfiles = catchAsync(async (_req: Request, res: Response) => {
-  const profiles = await StaffProfile.find().sort({ category: 1, name: 1 });
+  const profiles = await StaffProfile.find().sort({ category: 1, displayOrder: 1, name: 1 });
   return res.status(HTTP_STATUS.OK).json(profiles);
+});
+
+export const reorderStaffProfiles = catchAsync(async (req: Request, res: Response) => {
+  const { category, profileIds } = req.body as { category?: unknown; profileIds?: unknown };
+  if (category !== "leadership" && category !== "staff") {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Category must be leadership or staff");
+  }
+  if (!Array.isArray(profileIds) || profileIds.length > 200 ||
+    profileIds.some((id) => typeof id !== "string" || !mongoose.isValidObjectId(id)) ||
+    new Set(profileIds).size !== profileIds.length) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Provide a unique ordered list of valid profile IDs");
+  }
+
+  const currentProfiles = await StaffProfile.find({ category }).select("_id");
+  if (currentProfiles.length !== profileIds.length ||
+    !currentProfiles.every((profile) => profileIds.includes(profile._id.toString()))) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "The ordered profile list must include every profile in that section");
+  }
+
+  await StaffProfile.bulkWrite(profileIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: id, category },
+      update: { $set: { displayOrder: index } },
+    },
+  })));
+  const profiles = await StaffProfile.find({ category }).sort({ displayOrder: 1, name: 1 });
+  return res.status(HTTP_STATUS.OK).json({ message: "Team profile order updated", data: profiles });
 });
 
 export const createPublicStaffProfile = catchAsync(async (req: Request, res: Response) => {
@@ -81,10 +109,13 @@ export const createPublicStaffProfile = catchAsync(async (req: Request, res: Res
 
   const imageFile = (req.files as Record<string, Express.Multer.File[]> | undefined)?.image?.[0];
   const imageUrl = imageFile ? (await fileUploader([imageFile]))[0] : image;
+  const profileCategory = category ?? "staff";
+  const lastInCategory = await StaffProfile.findOne({ category: profileCategory }).sort({ displayOrder: -1 });
   const profile = await StaffProfile.create({
     name: name.trim(),
     position: position.trim(),
-    category: category ?? "staff",
+    category: profileCategory,
+    displayOrder: (lastInCategory?.displayOrder ?? -1) + 1,
     image: imageUrl,
   });
   return res.status(HTTP_STATUS.CREATED).json({ message: "Team profile created", data: profile });

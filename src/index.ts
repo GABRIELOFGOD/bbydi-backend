@@ -17,6 +17,17 @@ config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+let initialization: Promise<void> | undefined;
+const initialize = () => {
+  if (!initialization) {
+    initialization = connectDB().then(migrateLegacyContent).catch((error: unknown) => {
+      initialization = undefined;
+      throw error;
+    });
+  }
+  return initialization;
+};
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
@@ -25,6 +36,10 @@ app.use(cors({
 }));
 
 app.use(morgan("dev"));
+
+app.use((req, res, next) => {
+  void initialize().then(() => next(), next);
+});
 
 app.get("/", (req, res) => {
   res.send("Hello from BBYDI website");
@@ -42,15 +57,15 @@ app.use("/api/notifications", notificationRoutes);
 // ========== Global error handler ============== //
 app.use(globalErrorHandler);
 
-const startServer = async () => {
-  await connectDB();
-  await migrateLegacyContent();
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+if (process.env.VERCEL !== "1") {
+  void initialize().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  }).catch((error: unknown) => {
+    console.error("Server startup failed", error);
+    process.exitCode = 1;
   });
-};
+}
 
-void startServer().catch((error: unknown) => {
-  console.error("Server startup failed", error);
-  process.exitCode = 1;
-});
+export default app;

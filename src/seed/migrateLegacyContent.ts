@@ -1,12 +1,13 @@
 import {
+  AdminTeamData,
   News,
   OtherOpportunities,
   ProgrammingAreas,
   Projects,
   Publications,
+  StaffTeamData,
   TopOpportunities,
-} from "../../../bbydi-frontend/lib/constants";
-import { AdminTeamData, StaffTeamData } from "../../../bbydi-frontend/lib/team";
+} from "./legacyData";
 import ContentItem, { ContentKind, ContentItemType } from "../models/contentItem";
 import Program from "../models/program";
 import Project from "../models/project";

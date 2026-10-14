@@ -1,0 +1,535 @@
+{
+  "generated": "2026-10-14",
+  "source": "BBYDI Medium publication (medium.com/@brainbuildersintl), migrated from Medium’s own account export",
+  "count": 25,
+  "categories": [
+    "Opinion",
+    "Gender Justice",
+    "Digital Rights",
+    "AI & Technology",
+    "Governance",
+    "Education",
+    "Climate",
+    "Elections"
+  ],
+  "posts": [
+    {
+      "slug": "tech-tool-of-abuse",
+      "title": "When Technology Becomes a Tool of Abuse",
+      "standfirst": "Online abuse can follow people into their homes, relationships, workplaces and public lives. Understanding technology-facilitated gender-based violence is the first step towards responding properly.",
+      "category": "Digital Rights",
+      "tags": [],
+      "date": "2026-09-21",
+      "dateDisplay": "21 September 2026",
+      "readingTime": "5 min read",
+      "wordCount": 1245,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/when-technology-becomes-a-tool-of-abuse-20b6247eae7a",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*XK5a6rDFwZXi3cHXNNKbFQ.jpeg",
+      "heroFallbackAlt": "Young women at a BBYDI community townhall on technology-facilitated gender-based violence",
+      "featured": true,
+      "images": 0
+    },
+    {
+      "slug": "peaceful-not-safe",
+      "title": "A Peaceful Election Is Not Always a Safe Election for Women",
+      "standfirst": "Women’s political participation carries costs that men do not always bear in the same way. If Nigeria wants safer elections, it must look beyond polling-day calm and confront the threats, reputational attacks and institutional failures that push women out of public life.",
+      "category": "Elections",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-08-28",
+      "dateDisplay": "28 August 2026",
+      "readingTime": "7 min read",
+      "wordCount": 1572,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/a-peaceful-election-is-not-always-a-safe-election-for-women-81a1b52d014f",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*HkJzy1zxpVQoi8PKyIEMsg.jpeg",
+      "heroFallbackAlt": "Women listening at a BBYDI community townhall on technology-facilitated gender-based violence",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "before-the-first-blow",
+      "title": "The Fight Against Gender-Based Violence Starts Long Before the First Blow",
+      "standfirst": "Gender-based violence often becomes visible only after harm has already taken hold. Prevention begins earlier, by helping communities recognise abuse, challenge the norms that excuse it, and build trusted systems that make safer choices possible.",
+      "category": "Gender Justice",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-08-27",
+      "dateDisplay": "27 August 2026",
+      "readingTime": "8 min read",
+      "wordCount": 1817,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/the-fight-against-gender-based-violence-starts-long-before-the-first-blow-841b421eb2c3",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*7al5Im5-qFY3AazVcae_Yw.jpeg",
+      "heroFallbackAlt": "Men and young people at a BBYDI community townhall on gender-based violence",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "schools-safer",
+      "title": "Nigeria already knows how to make schools safer. It keeps buying something else",
+      "standfirst": "Nigeria issued a national school safety policy in 2021. Five years on, states are still forming committees, and the threat map that policy was built for no longer matches where children are being taken.",
+      "category": "Education",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-07-22",
+      "dateDisplay": "22 July 2026",
+      "readingTime": "5 min read",
+      "wordCount": 995,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/nigeria-already-knows-how-to-make-schools-safer-it-keeps-buying-something-else-d9b001ebbd00",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*-HPQZbtx5ytR7wWruXf8Nw.jpeg",
+      "heroFallbackAlt": "Secondary school students gathered for a BBYDI climate education session",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "online-abuse-offline-silence",
+      "title": "Online abuse, offline silence",
+      "standfirst": "The response to online gender-based violence focuses on platforms and moderation, and it should. But the harm also happens in an offline world of family and community, where old norms decide whether a woman is believed or blamed, and moderation cannot follow her there.",
+      "category": "Gender Justice",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-07-10",
+      "dateDisplay": "10 July 2026",
+      "readingTime": "4 min read",
+      "wordCount": 936,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/online-abuse-offline-silence-88eed55c9b8c",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*DMwiVWukgCEtJP2LQeoahA.png",
+      "heroFallbackAlt": "Young women at a BBYDI community townhall on technology-facilitated gender-based violence",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "men-not-hitting",
+      "title": "The men who thought not hitting their wives was enough",
+      "standfirst": "Preventing gender-based violence means reaching the men who believe they are already part of the solution, and funding the slow work of changing what a community accepts as normal.",
+      "category": "Gender Justice",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-06-26",
+      "dateDisplay": "26 June 2026",
+      "readingTime": "5 min read",
+      "wordCount": 1174,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/the-men-who-thought-not-hitting-their-wives-was-enough-7bb2afc90cd5",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*GhxsURx2NajxtJoR1gndhQ.jpeg",
+      "heroFallbackAlt": "Traditional and religious leaders at BBYDI’s high-level statewide event against gender-based violence in Kwara State",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "june-12-democracy",
+      "title": "This June 12, Nigeria’s Democracy Faces a Threat It Has Never Seen",
+      "standfirst": "In 1993, the men who ran Nigeria buried the result of its freest election. Ahead of the 2027 vote, the danger is harder to fight: AI-generated fakes that take seconds to make and are already spreading online.",
+      "category": "Elections",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-06-12",
+      "dateDisplay": "12 June 2026",
+      "readingTime": "4 min read",
+      "wordCount": 807,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/this-june-12-nigerias-democracy-faces-a-threat-it-has-never-seen-9b408fe678c5",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*4g3T2xhO3JawqnfFMyplDg.png",
+      "heroFallbackAlt": "Panel and youth artwork at the BBYDI Youth Artivism Festival on GBV prevention",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "floods-warning",
+      "title": "Nigeria Knows the Floods Are Coming. The Question Is Whether Communities Will Hear the Warning in Time",
+      "standfirst": "NiMet and NIHSA can now predict where the floods will hit. The unfinished work is making sure the warnings reach the people they are meant for in time, in their language, and from voices they trust.",
+      "category": "Climate",
+      "tags": [],
+      "date": "2026-05-01",
+      "dateDisplay": "1 May 2026",
+      "readingTime": "5 min read",
+      "wordCount": 1081,
+      "author": {
+        "name": "Lola Odeyemi",
+        "role": "Contributor, Climate and Disaster Preparedness"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/nigeria-knows-the-floods-are-coming-bf61877cb5c2",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*vv3Ai1kB_Jmol36BE_HHNw.jpeg",
+      "heroFallbackAlt": "Secondary school students gathered for a BBYDI climate education session",
+      "featured": false,
+      "images": 1
+    },
+    {
+      "slug": "essays-ai",
+      "title": "What 1,423 essays revealed about how Nigerian students are using AI",
+      "standfirst": "In a national competition about responsible AI use, the commonest reason an essay missed the shortlist was that the student had leaned too hard on AI to write it.",
+      "category": "AI & Technology",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-04-27",
+      "dateDisplay": "27 April 2026",
+      "readingTime": "4 min read",
+      "wordCount": 961,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/what-1-423-essays-revealed-about-how-nigerian-students-are-using-ai-6684f64a0f54",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*rUGn0D9PKHMDs3nRKy9rcg.png",
+      "heroFallbackAlt": "Students working together at the BBYDI-PJMF national essay competition grand finale",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "check-whatsapp",
+      "title": "How to Check a WhatsApp Message Before You Share It",
+      "standfirst": "A message lands in your group claiming exams are cancelled or an outbreak has reached your area. Your instinct is to forward it. Five steps to check first.",
+      "category": "Digital Rights",
+      "tags": [],
+      "date": "2026-04-10",
+      "dateDisplay": "10 April 2026",
+      "readingTime": "3 min read",
+      "wordCount": 676,
+      "author": {
+        "name": "Brain Builders Youth Development Initiative",
+        "role": "BBYDI"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/how-to-check-a-whatsapp-message-before-you-share-it-4cccfa926fe2",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*_c_hsGret-6VqeXun40N_w.jpeg",
+      "heroFallbackAlt": "Participants holding placards at the BBYDI-PJMF AI literacy training for parents, communities and youths",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "five-things-wrong",
+      "title": "Five Things We Got Wrong About Community Dialogue on GBV And What We Changed",
+      "standfirst": "We planned community dialogues on gender-based violence in Kwara State. Most of our assumptions didn’t survive the first session.",
+      "category": "Gender Justice",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-04-02",
+      "dateDisplay": "2 April 2026",
+      "readingTime": "7 min read",
+      "wordCount": 1487,
+      "author": {
+        "name": "Ahmed Adebowale",
+        "role": "Lead, Community Engagement"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/five-things-we-got-wrong-about-community-dialogue-on-gbv-and-what-we-changed-b89e55e128d5",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*LyI5cd_1JK6WvfE6QpduOQ.jpeg",
+      "heroFallbackAlt": "Men and young people at a BBYDI community townhall on gender-based violence",
+      "featured": false,
+      "images": 1
+    },
+    {
+      "slug": "teachers-ai-day",
+      "title": "What 93 Nigerian Teachers Discovered About AI in a Single Day",
+      "standfirst": "Hands-on workshops in Kwara and Osun states found that teachers weren’t reluctant to use AI, they just hadn’t been shown what it could do.",
+      "category": "Education",
+      "tags": [],
+      "date": "2026-03-26",
+      "dateDisplay": "26 March 2026",
+      "readingTime": "4 min read",
+      "wordCount": 804,
+      "author": {
+        "name": "Hanifat Omolara Balogun",
+        "role": "Programmes Officer, TFGBV"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/what-93-nigerian-teachers-discovered-about-ai-in-a-single-day-29b7f05e1646",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*vxB8otlnXzPq3Dsov9yGNA.jpeg",
+      "heroFallbackAlt": "Participants holding placards at the BBYDI-PJMF AI literacy training for parents, communities and youths",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "budget-accountability",
+      "title": "When Citizens Understand The Budget, They Demand Accountability",
+      "standfirst": "Market traders in Kwara long heard about budgets on the news without knowing what they meant for the markets. After budget literacy training they are asking questions.",
+      "category": "Governance",
+      "tags": [],
+      "date": "2026-03-23",
+      "dateDisplay": "23 March 2026",
+      "readingTime": "4 min read",
+      "wordCount": 732,
+      "author": {
+        "name": "Brain Builders Youth Development Initiative",
+        "role": "BBYDI"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/when-citizens-understand-the-budget-they-demand-accountability-c726c7231c9c",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*3Ir-ggc2Ozs-xOvSrW9-iQ.jpeg",
+      "heroFallbackAlt": "Men and young people at a BBYDI community townhall on gender-based violence",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "ai-literacy-local",
+      "title": "AI Literacy Must Be Built Locally — Or It Will Leave Most Nigerians Behind",
+      "standfirst": "The global push for AI education was not designed with Nigerian realities in mind. It shows.",
+      "category": "AI & Technology",
+      "tags": [
+        "Opinion"
+      ],
+      "date": "2026-03-19",
+      "dateDisplay": "19 March 2026",
+      "readingTime": "7 min read",
+      "wordCount": 1550,
+      "author": {
+        "name": "Halimat Olufade",
+        "role": "Programmes Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/ai-literacy-must-be-built-locally-or-it-will-leave-most-nigerians-behind-13b1978ba1cb",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*Zrn998WE9-Mvt-E3P5yrdQ.jpeg",
+      "heroFallbackAlt": "Participants holding placards at the BBYDI-PJMF AI literacy training for parents, communities and youths",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "kemi-whatsapp",
+      "title": "She Reported It on WhatsApp: How KEMI Is Reaching Women Where Other Services Can’t",
+      "standfirst": "An AI-powered WhatsApp chatbot, co-designed with survivors, is connecting women facing online violence to real support in under a minute.",
+      "category": "Digital Rights",
+      "tags": [],
+      "date": "2026-03-12",
+      "dateDisplay": "12 March 2026",
+      "readingTime": "6 min read",
+      "wordCount": 1330,
+      "author": {
+        "name": "Nurah Jimoh-Sanni",
+        "role": "Executive Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/she-reported-it-on-whatsapp-how-kemi-is-reaching-women-where-other-services-cant-a1ce9e451aa3",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*KVzlxE99wcX4T2a7ZoqeWQ.jpeg",
+      "heroFallbackAlt": "Young women at a BBYDI community townhall on technology-facilitated gender-based violence",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "flood-not-climate-alone",
+      "title": "The Flood That Climate Change Didn’t Cause Alone",
+      "standfirst": "In Mokwa, Nigeria, a deadly storm met a broken system and the result was devastating.",
+      "category": "Climate",
+      "tags": [],
+      "date": "2025-06-16",
+      "dateDisplay": "16 June 2025",
+      "readingTime": "8 min read",
+      "wordCount": 1904,
+      "author": {
+        "name": "Lola Odeyemi",
+        "role": "Contributor, Climate and Disaster Preparedness"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/the-flood-that-climate-change-didnt-cause-alone-0e694a753b0f",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/0*_rDS9Xe0VPHQEDrd",
+      "heroFallbackAlt": "Secondary school students gathered for a BBYDI climate education session",
+      "featured": false,
+      "images": 4
+    },
+    {
+      "slug": "bruised-and-blamed",
+      "title": "Bruised and Blamed: What It Means to Be a Woman in Nigeria Today",
+      "standfirst": "She was not killed in a war, but her body carried the signs of one. For millions of Nigerian women, home is the battleground and justice a distant rumour.",
+      "category": "Gender Justice",
+      "tags": [],
+      "date": "2025-06-01",
+      "dateDisplay": "1 June 2025",
+      "readingTime": "7 min read",
+      "wordCount": 1620,
+      "author": {
+        "name": "Lola Odeyemi",
+        "role": "Contributor, Climate and Disaster Preparedness"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/bruised-and-blamed-what-it-means-to-be-a-woman-in-nigeria-today-123313308b5e",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/0*ewOTUWWmiDSQ7NP7",
+      "heroFallbackAlt": "Women listening at a BBYDI community townhall on technology-facilitated gender-based violence",
+      "featured": false,
+      "images": 1
+    },
+    {
+      "slug": "ashes-instead-of-pads",
+      "title": "‘I Used Ashes Instead of Pads’: The Hidden Crisis of Menstrual Health in Nigeria",
+      "standfirst": "Every month girls across Nigeria vanish from classrooms because they are menstruating, improvising with rags, old newspapers or ashes.",
+      "category": "Gender Justice",
+      "tags": [],
+      "date": "2025-05-29",
+      "dateDisplay": "29 May 2025",
+      "readingTime": "7 min read",
+      "wordCount": 1591,
+      "author": {
+        "name": "Nurah Jimoh-Sanni",
+        "role": "Executive Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/i-used-ashes-instead-of-pads-the-hidden-crisis-of-menstrual-health-in-nigeria-773373908fc6",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/0*Yfq0i2Oj0gsqdb8d",
+      "heroFallbackAlt": "BBYDI team and Padded Girls participants with a community leader at the project close-out",
+      "featured": false,
+      "images": 3
+    },
+    {
+      "slug": "just-a-visit",
+      "title": "She Thought It Was Just a Visit. This Is What Tech-Facilitated Violence Looks Like",
+      "standfirst": "We talk about safety. We talk about girls. But we don’t talk about how the internet has become the perfect place to make them disappear.",
+      "category": "Gender Justice",
+      "tags": [],
+      "date": "2025-05-15",
+      "dateDisplay": "15 May 2025",
+      "readingTime": "6 min read",
+      "wordCount": 1338,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/she-thought-it-was-just-a-visit-this-is-what-tech-facilitated-violence-looks-like-8069a7fa3ce6",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*ZXyLhA_mOqqnX84JFRnuzA@2x.png",
+      "heroFallbackAlt": "Young women at a BBYDI community townhall on technology-facilitated gender-based violence",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "killed-for-being-women",
+      "title": "Killed for Being Women: Unmasking the Femicide Crisis in Nigeria",
+      "standfirst": "Most Nigerian femicides are never named as such. They are buried inside generic homicide statistics, which is part of why so little changes.",
+      "category": "Gender Justice",
+      "tags": [],
+      "date": "2025-04-28",
+      "dateDisplay": "28 April 2025",
+      "readingTime": "5 min read",
+      "wordCount": 1072,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/killed-for-being-women-unmasking-the-femicide-crisis-in-nigeria-7af4881c4239",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/0*N5YhoSY8y0Hj3NLr",
+      "heroFallbackAlt": "Women listening at a BBYDI community townhall on technology-facilitated gender-based violence",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "waste-to-wealth",
+      "title": "From Waste to Wealth: How Nigeria Can Lead in Sustainable Fashion",
+      "standfirst": "Katangua market swallows the world’s cast-off clothing. A few Nigerian designers are building the opposite — a fashion economy that treats waste as raw material.",
+      "category": "Climate",
+      "tags": [],
+      "date": "2025-04-04",
+      "dateDisplay": "4 April 2025",
+      "readingTime": "12 min read",
+      "wordCount": 2686,
+      "author": {
+        "name": "Lola Odeyemi",
+        "role": "Contributor, Climate and Disaster Preparedness"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/from-waste-to-wealth-how-nigeria-can-lead-in-sustainable-fashion-4530a29ce0ad",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/0*Uszq3XlssLqoDwdF",
+      "heroFallbackAlt": "Students at a BBYDI climate education session in school",
+      "featured": false,
+      "images": 11
+    },
+    {
+      "slug": "youthgovtracka-post",
+      "title": "YouthGovTracka: Holding State Governors Accountable for Youth-Inclusive Policies",
+      "standfirst": "Campaign promises are central to elections yet often abandoned in office. YouthGovTracka tracks and evaluates governors’ youth commitments, showing who is delivering and who is falling short.",
+      "category": "Governance",
+      "tags": [],
+      "date": "2024-06-29",
+      "dateDisplay": "29 June 2024",
+      "readingTime": "5 min read",
+      "wordCount": 1039,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/youthgovtracka-holding-state-governors-accountable-for-youth-inclusive-policies-3ec6908be620",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*d49A9eLUiDTK8XnVeQLkMg.jpeg",
+      "heroFallbackAlt": "BBYDI staff at the Abuja launch of their civic engagement research",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "myaifactchecker",
+      "title": "How MyAIFactChecker is Using AI to Combat Misinformation in Africa",
+      "standfirst": "Misinformation across Africa threatens economies, political outcomes and public health. MyAIFactChecker analyses both the factual content and the sentiment of a claim, in seven African languages.",
+      "category": "AI & Technology",
+      "tags": [],
+      "date": "2024-06-06",
+      "dateDisplay": "6 June 2024",
+      "readingTime": "2 min read",
+      "wordCount": 440,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/how-myaifactchecker-is-using-ai-to-combat-misinformation-in-africa-6fbee1dceaea",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*olxTnhEPYAuhAoIGCl4eLg.jpeg",
+      "heroFallbackAlt": "Participants holding placards at the BBYDI-PJMF AI literacy training for parents, communities and youths",
+      "featured": false,
+      "images": 0
+    },
+    {
+      "slug": "padded-girls",
+      "title": "Padded Girls: Training Women on Reusable Pads to Ease Period Poverty",
+      "standfirst": "More than 300 million women menstruate on any given day, and in rural Kwara the cost of pads decides who stays in the classroom. The Padded Girls Project trained women to make their own.",
+      "category": "Gender Justice",
+      "tags": [],
+      "date": "2024-03-08",
+      "dateDisplay": "8 March 2024",
+      "readingTime": "4 min read",
+      "wordCount": 767,
+      "author": {
+        "name": "Mariam Abdulkareem",
+        "role": "Contributor"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/padded-girls-training-women-on-reusable-pads-to-ease-period-poverty-822a65c02282",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*Ya-hPO8N7vFOmPUK-_L_Eg.jpeg",
+      "heroFallbackAlt": "BBYDI team and Padded Girls participants at the project close-out",
+      "featured": false,
+      "images": 4
+    },
+    {
+      "slug": "spaceforher-post",
+      "title": "#SpaceForHer: Increasing Female Participation in Politics and Promoting Gender Inclusion",
+      "standfirst": "In the 2023 elections only 8.6% of senatorial candidates were women. The six-week SpaceForHer residency fellowship set out to change that.",
+      "category": "Gender Justice",
+      "tags": [],
+      "date": "2023-06-07",
+      "dateDisplay": "7 June 2023",
+      "readingTime": "4 min read",
+      "wordCount": 680,
+      "author": {
+        "name": "Sanni Alausa-Issa",
+        "role": "Communications Director"
+      },
+      "mediumUrl": "https://medium.com/@brainbuildersintl/spaceforher-increasing-female-participation-in-politics-and-promoting-gender-inclusion-f724f0ab4ef3",
+      "heroImage": "https://cdn-images-1.medium.com/max/1600/1*Ah8_RMEIcp8nuFxba9_GJA.jpeg",
+      "heroFallbackAlt": "Women listening at a BBYDI community townhall on technology-facilitated gender-based violence",
+      "featured": false,
+      "images": 4
+    }
+  ]
+}

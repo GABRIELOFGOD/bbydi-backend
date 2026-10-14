@@ -26,6 +26,7 @@ export type ContentItemType = {
   status?: string;
   image?: string;
   imageCaption?: string;
+  imageAlt?: string;
   imageWidth?: number;
   imageAlignment?: "left" | "center" | "right";
   featured?: boolean;
@@ -34,6 +35,11 @@ export type ContentItemType = {
   type?: string;
   deadline?: string;
   publisher?: string;
+  authorRole?: string;
+  readingTime?: string;
+  wordCount?: number;
+  tags?: string[];
+  sourceUrl?: string;
   date?: Date;
   document?: string;
   approved: boolean;
@@ -54,6 +60,7 @@ const ContentItemSchema = new Schema<ContentItemType>({
   status: String,
   image: String,
   imageCaption: String,
+  imageAlt: String,
   imageWidth: { type: Number, min: 25, max: 100, default: 100 },
   imageAlignment: { type: String, enum: ["left", "center", "right"], default: "center" },
   featured: { type: Boolean, default: false },
@@ -62,6 +69,11 @@ const ContentItemSchema = new Schema<ContentItemType>({
   type: String,
   deadline: String,
   publisher: String,
+  authorRole: String,
+  readingTime: String,
+  wordCount: Number,
+  tags: [String],
+  sourceUrl: String,
   date: Date,
   document: String,
   approved: { type: Boolean, default: false },

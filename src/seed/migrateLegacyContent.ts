@@ -12,6 +12,7 @@ import ContentItem, { ContentKind, ContentItemType } from "../models/contentItem
 import Program from "../models/program";
 import Project from "../models/project";
 import StaffProfile from "../models/staffProfile";
+import { migrateBlogPosts } from "./migrateBlogPosts";
 
 type LegacyContent = Omit<ContentItemType, "postedBy" | "approved" | "kind">;
 
@@ -176,4 +177,6 @@ export const migrateLegacyContent = async (): Promise<void> => {
       upsert: true,
     },
   })));
+
+  await migrateBlogPosts();
 };

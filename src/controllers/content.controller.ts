@@ -5,28 +5,9 @@ import { catchAsync } from "../utils/catchAsync";
 import { fileUploader, responder } from "../utils/helper";
 import { notifyAdmins, notifyUser } from "../utils/notifications";
 import HTTP_STATUS from "../utils/statusCode";
-import sanitizeHtml from "sanitize-html";
 import mongoose from "mongoose";
 import User from "../models/user";
-
-const sanitizeNewsContent = (content: string): string => sanitizeHtml(content, {
-  allowedTags: [
-    ...sanitizeHtml.defaults.allowedTags,
-    "h1", "h2", "h3", "img", "table", "thead", "tbody", "tr", "th", "td",
-  ],
-  allowedAttributes: {
-    a: ["href", "name", "target", "rel"],
-    img: ["src", "alt", "title", "width", "height", "data-width", "data-align"],
-    div: ["data-image-gallery", "data-columns"],
-    td: ["colspan", "rowspan"],
-    th: ["colspan", "rowspan"],
-  },
-  allowedSchemes: ["http", "https", "mailto"],
-  allowedSchemesByTag: { img: ["https"] },
-  transformTags: {
-    a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer" }, true),
-  },
-});
+import { sanitizeRichContent } from "../utils/sanitizeContent";
 
 const slugify = (value: string): string => value
   .normalize("NFKD")
@@ -242,7 +223,7 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
     title: req.body.title.trim(),
     ...(hasSlug(kind) ? { slug: await uniqueNewsSlug(req.body.title.trim(), kind) } : {}),
     description: typeof req.body.description === "string"
-      ? kind === "news" || kind === "blog" ? sanitizeNewsContent(req.body.description) : req.body.description
+      ? kind === "news" || kind === "blog" ? sanitizeRichContent(req.body.description) : req.body.description
       : undefined,
     context: req.body.context,
     summary: req.body.summary,
@@ -332,7 +313,7 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
   for (const field of fields) {
     if (req.body[field] !== undefined) {
       if (field === "description" && (kind === "news" || kind === "blog")) {
-        item.description = sanitizeNewsContent(req.body.description);
+        item.description = sanitizeRichContent(req.body.description);
       } else if (typeof req.body[field] === "string") {
         (item[field] as string | undefined) = req.body[field];
       } else {

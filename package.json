@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
-    "build": "tsc"
+    "build": "tsc && node -e \"require('node:fs').cpSync('src/seed/data', 'dist/seed/data', { recursive: true })\"",
+    "seed:blog": "ts-node src/seed/runBlogMigration.ts"
   },
   "repository": {
     "type": "git",

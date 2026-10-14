@@ -57,6 +57,9 @@ export const updateCurrentUser = catchAsync(async (req: Request, res: Response) 
   if (!userId) return responder(res, HTTP_STATUS.UNAUTHORIZED, "Please login to your account");
 
   const { name, email, position, avatar, bio } = req.body;
+  if (bio !== undefined && req.user?.role !== UserRole.ADMIN) {
+    return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can update biographies");
+  }
   if (email !== undefined && !isValidEmail(email)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Please provide a valid email address");
   }

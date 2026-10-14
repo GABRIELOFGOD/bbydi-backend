@@ -9,6 +9,7 @@ import {
   deletePublicStaffProfile,
   getAllStaffProfiles,
   getPublicStaffProfiles,
+  getPublicStaffProfileById,
   getStaffAccounts,
   getStaffProfiles,
   inviteStaff,
@@ -26,6 +27,7 @@ router.get("/accounts/all", authMiddleware, authorizeRoles(UserRole.ADMIN), getS
 router.patch("/accounts/:id", authMiddleware, authorizeRoles(UserRole.ADMIN), updateStaffAccount);
 router.get("/profiles/all", authMiddleware, authorizeRoles(UserRole.ADMIN), getAllStaffProfiles);
 router.post("/profiles/reorder", authMiddleware, authorizeRoles(UserRole.ADMIN), reorderStaffProfiles);
+router.get("/profiles/:id", getPublicStaffProfileById);
 router.get("/profiles", getPublicStaffProfiles);
 router.post("/profiles", authMiddleware, authorizeRoles(UserRole.ADMIN), upload.fields([{ name: "image", maxCount: 1 }]), createPublicStaffProfile);
 router.patch("/profiles/:id", authMiddleware, authorizeRoles(UserRole.ADMIN), upload.fields([{ name: "image", maxCount: 1 }]), updatePublicStaffProfile);

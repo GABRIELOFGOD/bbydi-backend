@@ -9,6 +9,7 @@ export type UserType = {
   role: UserRole;
   position: string;
   avatar?: string;
+  bio?: string;
   isVerified: boolean;
   isBlocked: boolean;
   createdBy: UserType | undefined;
@@ -36,6 +37,11 @@ const UserSchema: Schema<UserType> = new Schema(
     avatar: {
       type: String,
       nullable: true,
+    },
+    bio: {
+      type: String,
+      default: "",
+      maxlength: 5000,
     },
     role: {
       type: String,

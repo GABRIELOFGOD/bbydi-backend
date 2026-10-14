@@ -4,6 +4,7 @@ export const CONTENT_KINDS = [
   "program",
   "project",
   "news",
+  "blog",
   "opportunity",
   "report",
   "publication",
@@ -27,6 +28,7 @@ export type ContentItemType = {
   imageCaption?: string;
   imageWidth?: number;
   imageAlignment?: "left" | "center" | "right";
+  featured?: boolean;
   link?: string;
   location?: string;
   type?: string;
@@ -54,6 +56,7 @@ const ContentItemSchema = new Schema<ContentItemType>({
   imageCaption: String,
   imageWidth: { type: Number, min: 25, max: 100, default: 100 },
   imageAlignment: { type: String, enum: ["left", "center", "right"], default: "center" },
+  featured: { type: Boolean, default: false },
   link: String,
   location: String,
   type: String,

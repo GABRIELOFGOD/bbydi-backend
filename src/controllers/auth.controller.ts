@@ -56,12 +56,21 @@ export const updateCurrentUser = catchAsync(async (req: Request, res: Response) 
   const userId = req.user?._id;
   if (!userId) return responder(res, HTTP_STATUS.UNAUTHORIZED, "Please login to your account");
 
-  const { name, email, position, avatar } = req.body;
+  const { name, email, position, avatar, bio } = req.body;
   if (email !== undefined && !isValidEmail(email)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Please provide a valid email address");
   }
   if (name !== undefined && (typeof name !== "string" || !name.trim())) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Name cannot be empty");
+  }
+  for (const [field, value, limit] of [
+    ["position", position, 200],
+    ["avatar", avatar, 2000],
+    ["bio", bio, 5000],
+  ] as const) {
+    if (value !== undefined && (typeof value !== "string" || value.length > limit)) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, `${field} must be text no longer than ${limit} characters`);
+    }
   }
 
   const user = await User.findById(userId);
@@ -75,6 +84,7 @@ export const updateCurrentUser = catchAsync(async (req: Request, res: Response) 
   if (name !== undefined) user.name = name.trim();
   if (position !== undefined) user.position = position;
   if (avatar !== undefined) user.avatar = avatar;
+  if (bio !== undefined) user.bio = bio;
 
   await user.save();
   const safeUser = { ...user.toObject(), password: undefined, createdBy: undefined };

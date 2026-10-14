@@ -5,7 +5,9 @@ export type StaffProfileType = {
   name: string;
   position: string;
   image?: string;
-  category: "leadership" | "staff";
+  bio?: string;
+  accountId?: mongoose.Types.ObjectId;
+  category: "leadership" | "staff" | "volunteer";
   active: boolean;
   displayOrder: number;
 };
@@ -15,7 +17,9 @@ const StaffProfileSchema = new Schema<StaffProfileType>({
   name: { type: String, required: true, trim: true },
   position: { type: String, required: true, trim: true },
   image: String,
-  category: { type: String, enum: ["leadership", "staff"], default: "staff" },
+  bio: { type: String, maxlength: 5000, default: "" },
+  accountId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  category: { type: String, enum: ["leadership", "staff", "volunteer"], default: "staff" },
   active: { type: Boolean, default: true },
   displayOrder: { type: Number, min: 0, default: 0 },
 }, { timestamps: true });

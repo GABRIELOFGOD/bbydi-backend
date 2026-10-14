@@ -37,12 +37,12 @@ const slugify = (value: string): string => value
   .slice(0, 100)
   .replace(/-+$/g, "");
 
-const uniqueNewsSlug = async (title: string, excludeId?: mongoose.Types.ObjectId): Promise<string> => {
+const uniqueNewsSlug = async (title: string, kind: "news" | "blog" = "news", excludeId?: mongoose.Types.ObjectId): Promise<string> => {
   const baseSlug = slugify(title) || "news";
   for (let suffix = 1; suffix <= 1000; suffix += 1) {
     const candidate = suffix === 1 ? baseSlug : `${baseSlug}-${suffix}`;
     const existing = await ContentItem.exists({
-      kind: "news",
+      kind,
       slug: candidate,
       ...(excludeId ? { _id: { $ne: excludeId } } : {}),
     });
@@ -57,6 +57,8 @@ const legacyNewsSlug = (title: string, id: string): string =>
 const isDuplicateKeyError = (error: unknown): error is { code: number } =>
   typeof error === "object" && error !== null && "code" in error && error.code === 11000;
 
+const hasSlug = (kind: ContentKind): kind is "news" | "blog" => kind === "news" || kind === "blog";
+
 const contentPath = (kind: ContentKind): string => {
   const paths: Record<ContentKind, string> = {
     program: "programs",
@@ -65,6 +67,7 @@ const contentPath = (kind: ContentKind): string => {
     opportunity: "opportunities",
     report: "reports",
     publication: "publications",
+    blog: "blog",
     partner: "partners",
   };
   return `/dashboard/${paths[kind]}`;
@@ -90,11 +93,11 @@ export const getPublicContent = catchAsync(async (req: Request, res: Response) =
     kind,
     approved: true,
     isDeleted: { $ne: true },
-  }).sort({ sortOrder: 1, date: -1, createdAt: -1 });
-  const publicItems = kind === "news"
+  }).populate("postedBy", "name position avatar").sort({ sortOrder: 1, date: -1, createdAt: -1 });
+  const publicItems = kind === "news" || kind === "blog"
     ? items.map((item) => ({
       ...item.toObject(),
-      slug: item.slug || legacyNewsSlug(item.title, item._id.toString()),
+      slug: item.slug || (kind === "news" ? legacyNewsSlug(item.title, item._id.toString()) : undefined),
     }))
     : items;
   return res.status(HTTP_STATUS.OK).json(publicItems);
@@ -120,7 +123,7 @@ export const getPublicContentBySlug = catchAsync(async (req: Request, res: Respo
       legacyNewsSlug(candidate.title, candidate._id.toString()) === req.params.slug,
     ) ?? null;
   }
-  if (!item && mongoose.isValidObjectId(req.params.slug)) {
+  if (!item && kind !== "blog" && mongoose.isValidObjectId(req.params.slug)) {
     item = await ContentItem.findOne({
       _id: req.params.slug,
       kind,
@@ -129,6 +132,7 @@ export const getPublicContentBySlug = catchAsync(async (req: Request, res: Respo
     });
   }
   if (!item) return responder(res, HTTP_STATUS.NOT_FOUND, "Content not found");
+  if (item.postedBy) await item.populate("postedBy", "name position avatar");
   const response = item.toObject();
   if (kind === "news" && !response.slug) {
     response.slug = legacyNewsSlug(item.title, item._id.toString());
@@ -139,10 +143,6 @@ export const getPublicContentBySlug = catchAsync(async (req: Request, res: Respo
 export const getAdminContent = catchAsync(async (req: Request, res: Response) => {
   const kind = getKind(req);
   if (!kind) return responder(res, HTTP_STATUS.NOT_FOUND, "Content type not found");
-
-  if (kind === "news" && !isAdmin(req)) {
-    return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can manage news");
-  }
 
   const userId = req.user?._id;
   if (!isAdmin(req) && !userId) {
@@ -156,10 +156,10 @@ export const getAdminContent = catchAsync(async (req: Request, res: Response) =>
     .populate("postedBy", "name email")
     .sort({ createdAt: -1 });
   const items = await query;
-  const adminItems = kind === "news"
+  const adminItems = kind === "news" || kind === "blog"
     ? items.map((item) => ({
       ...item.toObject(),
-      slug: item.slug || legacyNewsSlug(item.title, item._id.toString()),
+      slug: item.slug || (kind === "news" ? legacyNewsSlug(item.title, item._id.toString()) : undefined),
     }))
     : items;
   return res.status(HTTP_STATUS.OK).json(adminItems);
@@ -192,24 +192,29 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
       return responder(res, HTTP_STATUS.BAD_REQUEST, `${field} must be text no longer than ${maxLength} characters`);
     }
   }
-  if (kind === "news" && req.body.imageWidth !== undefined) {
+  if (hasSlug(kind) && req.body.imageWidth !== undefined) {
     const width = Number(req.body.imageWidth);
     if (!Number.isInteger(width) || width < 25 || width > 100) {
       return responder(res, HTTP_STATUS.BAD_REQUEST, "Lead image width must be between 25 and 100");
     }
   }
-  if (kind === "news" && req.body.imageAlignment !== undefined &&
+  if (hasSlug(kind) && req.body.imageAlignment !== undefined &&
     !["left", "center", "right"].includes(req.body.imageAlignment)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Lead image alignment must be left, center, or right");
   }
-  if (kind === "news" && !isAdmin(req)) {
-    return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can publish news");
+  if (req.body.approved !== undefined && ![true, false, "true", "false"].includes(req.body.approved)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Publication status must be true or false");
   }
-
+  if (req.body.featured !== undefined && ![true, false, "true", "false"].includes(req.body.featured)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Featured status must be true or false");
+  }
   const imageFile = uploadedFile(req, "image");
   const documentFile = uploadedFile(req, "document");
   let poster = req.user;
-  if (req.body.posterId !== undefined && req.body.posterId !== req.user._id?.toString()) {
+  if (req.body.posterId !== undefined && !isAdmin(req)) {
+    return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can choose another publisher");
+  }
+  if (isAdmin(req) && req.body.posterId !== undefined && req.body.posterId !== req.user._id?.toString()) {
     if (typeof req.body.posterId !== "string" || !mongoose.isValidObjectId(req.body.posterId)) {
       return responder(res, HTTP_STATUS.BAD_REQUEST, "Please select a valid staff publisher");
     }
@@ -235,9 +240,9 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
   const values: Partial<ContentItemType> = {
     kind,
     title: req.body.title.trim(),
-    ...(kind === "news" ? { slug: await uniqueNewsSlug(req.body.title.trim()) } : {}),
+    ...(hasSlug(kind) ? { slug: await uniqueNewsSlug(req.body.title.trim(), kind) } : {}),
     description: typeof req.body.description === "string"
-      ? kind === "news" ? sanitizeNewsContent(req.body.description) : req.body.description
+      ? kind === "news" || kind === "blog" ? sanitizeNewsContent(req.body.description) : req.body.description
       : undefined,
     context: req.body.context,
     summary: req.body.summary,
@@ -254,7 +259,10 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
     publisher: poster.name,
     date: contentDate,
     document: documentUrls[0] ?? req.body.document,
-    approved: isAdmin(req) && (req.body.approved === undefined || req.body.approved === "true" || req.body.approved === true),
+    approved: req.body.approved === undefined
+      ? true
+      : req.body.approved === "true" || req.body.approved === true,
+    featured: req.user.role === UserRole.STAFF || req.body.featured === true || req.body.featured === "true",
     postedBy: poster._id,
   };
 
@@ -264,8 +272,8 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
       item = await ContentItem.create(values);
       break;
     } catch (error) {
-      if (kind !== "news" || !isDuplicateKeyError(error) || attempt >= 4) throw error;
-      values.slug = await uniqueNewsSlug(req.body.title.trim());
+      if (!hasSlug(kind) || !isDuplicateKeyError(error) || attempt >= 4) throw error;
+      values.slug = await uniqueNewsSlug(req.body.title.trim(), kind);
     }
   }
   if (!item.approved && !isAdmin(req)) {
@@ -284,10 +292,11 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
 export const updateContent = catchAsync(async (req: Request, res: Response) => {
   const kind = getKind(req);
   if (!kind) return responder(res, HTTP_STATUS.NOT_FOUND, "Content type not found");
-  if (!isAdmin(req)) return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can edit content");
-
   const item = await ContentItem.findOne({ _id: req.params.id, kind, isDeleted: { $ne: true } });
   if (!item) return responder(res, HTTP_STATUS.NOT_FOUND, "Content not found");
+  if (!isAdmin(req) && item.postedBy?.toString() !== req.user?._id?.toString()) {
+    return responder(res, HTTP_STATUS.FORBIDDEN, "You can only edit your own posts");
+  }
 
   const fields: (keyof ContentItemType)[] = [
     "title", "description", "context", "summary", "category", "status", "image",
@@ -314,9 +323,15 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
       return responder(res, HTTP_STATUS.BAD_REQUEST, `${field} must be text no longer than ${maxLength} characters`);
     }
   }
+  if (req.body.approved !== undefined && ![true, false, "true", "false"].includes(req.body.approved)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Publication status must be true or false");
+  }
+  if (req.body.featured !== undefined && ![true, false, "true", "false"].includes(req.body.featured)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Featured status must be true or false");
+  }
   for (const field of fields) {
     if (req.body[field] !== undefined) {
-      if (field === "description" && kind === "news") {
+      if (field === "description" && (kind === "news" || kind === "blog")) {
         item.description = sanitizeNewsContent(req.body.description);
       } else if (typeof req.body[field] === "string") {
         (item[field] as string | undefined) = req.body[field];
@@ -324,26 +339,26 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
         return responder(res, HTTP_STATUS.BAD_REQUEST, `${field} must be text`);
       }
     }
-    if (kind === "news" && req.body.imageWidth !== undefined) {
-      const width = Number(req.body.imageWidth);
-      if (!Number.isInteger(width) || width < 25 || width > 100) {
-        return responder(res, HTTP_STATUS.BAD_REQUEST, "Lead image width must be between 25 and 100");
-      }
-      item.imageWidth = width;
-    }
-    if (kind === "news" && req.body.imageAlignment !== undefined) {
-      if (!["left", "center", "right"].includes(req.body.imageAlignment)) {
-        return responder(res, HTTP_STATUS.BAD_REQUEST, "Lead image alignment must be left, center, or right");
-      }
-      item.imageAlignment = req.body.imageAlignment;
-    }
   }
-  if (kind === "news" && req.body.title !== undefined) {
-    item.slug = await uniqueNewsSlug(req.body.title.trim(), item._id);
-  } else if (kind === "news" && !item.slug) {
-    item.slug = await uniqueNewsSlug(item.title, item._id);
+  if (hasSlug(kind) && req.body.imageWidth !== undefined) {
+    const width = Number(req.body.imageWidth);
+    if (!Number.isInteger(width) || width < 25 || width > 100) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Lead image width must be between 25 and 100");
+    }
+    item.imageWidth = width;
   }
-  if (kind === "news" && req.body.posterId !== undefined) {
+  if (hasSlug(kind) && req.body.imageAlignment !== undefined) {
+    if (!["left", "center", "right"].includes(req.body.imageAlignment)) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Lead image alignment must be left, center, or right");
+    }
+    item.imageAlignment = req.body.imageAlignment;
+  }
+  if ((kind === "news" || kind === "blog") && req.body.title !== undefined) {
+    item.slug = await uniqueNewsSlug(req.body.title.trim(), kind, item._id);
+  } else if ((kind === "news" || kind === "blog") && !item.slug) {
+    item.slug = await uniqueNewsSlug(item.title, kind, item._id);
+  }
+  if (isAdmin(req) && hasSlug(kind) && req.body.posterId !== undefined) {
     if (typeof req.body.posterId !== "string" || !mongoose.isValidObjectId(req.body.posterId)) {
       return responder(res, HTTP_STATUS.BAD_REQUEST, "Please select a valid staff publisher");
     }
@@ -371,8 +386,11 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
     }
     item.date = parsedDate;
   }
-  if (req.body.approved !== undefined) {
+  if ((isAdmin(req) || item.postedBy?.toString() === req.user?._id?.toString()) && req.body.approved !== undefined) {
     item.approved = req.body.approved === true || req.body.approved === "true";
+  }
+  if (isAdmin(req) && req.body.featured !== undefined) {
+    item.featured = req.body.featured === true || req.body.featured === "true";
   }
 
   const imageFile = uploadedFile(req, "image");
@@ -387,17 +405,17 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
 export const setContentApproval = catchAsync(async (req: Request, res: Response) => {
   const kind = getKind(req);
   if (!kind) return responder(res, HTTP_STATUS.NOT_FOUND, "Content type not found");
-  if (!isAdmin(req)) return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can review content");
   if (typeof req.body.approved !== "boolean") {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Approval status must be true or false");
   }
 
-  const item = await ContentItem.findOneAndUpdate(
-    { _id: req.params.id, kind, isDeleted: { $ne: true } },
-    { approved: req.body.approved },
-    { new: true },
-  );
+  const item = await ContentItem.findOne({ _id: req.params.id, kind, isDeleted: { $ne: true } });
   if (!item) return responder(res, HTTP_STATUS.NOT_FOUND, "Content not found");
+  if (!isAdmin(req) && item.postedBy?.toString() !== req.user?._id?.toString()) {
+    return responder(res, HTTP_STATUS.FORBIDDEN, "You can only update publication status for your own posts");
+  }
+  item.approved = req.body.approved;
+  await item.save();
 
   if (item.postedBy) {
     await notifyUser(item.postedBy.toString(), {
@@ -430,7 +448,8 @@ export const deleteContent = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const uploadNewsImage = catchAsync(async (req: Request, res: Response) => {
-  if (req.params.kind !== "news") {
+  const kind = getKind(req);
+  if (!kind || !hasSlug(kind)) {
     return responder(res, HTTP_STATUS.NOT_FOUND, "Content type not found");
   }
   if (!req.file) return responder(res, HTTP_STATUS.BAD_REQUEST, "Please select an image");

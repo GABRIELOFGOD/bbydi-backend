@@ -9,6 +9,7 @@ export const CONTENT_KINDS = [
   "report",
   "publication",
   "partner",
+  "innovation",
 ] as const;
 
 export type ContentKind = typeof CONTENT_KINDS[number];
@@ -17,12 +18,16 @@ export type ContentItemType = {
   kind: ContentKind;
   legacyKey?: string;
   slug?: string;
+  slugScope?: string;
   sortOrder?: number;
   title: string;
   description?: string;
   context?: string;
   summary?: string;
   category?: string;
+  theme?: string;
+  language?: string;
+  series?: string;
   status?: string;
   image?: string;
   imageCaption?: string;
@@ -44,6 +49,7 @@ export type ContentItemType = {
   document?: string;
   approved: boolean;
   postedBy?: mongoose.Types.ObjectId;
+  publisherUser?: mongoose.Types.ObjectId;
   isDeleted?: boolean;
 };
 
@@ -51,12 +57,16 @@ const ContentItemSchema = new Schema<ContentItemType>({
   kind: { type: String, enum: CONTENT_KINDS, required: true },
   legacyKey: String,
   slug: { type: String, trim: true },
+  slugScope: String,
   sortOrder: Number,
   title: { type: String, required: true, trim: true },
   description: { type: String, default: "" },
   context: String,
   summary: String,
   category: String,
+  theme: String,
+  language: String,
+  series: String,
   status: String,
   image: String,
   imageCaption: String,
@@ -78,6 +88,7 @@ const ContentItemSchema = new Schema<ContentItemType>({
   document: String,
   approved: { type: Boolean, default: false },
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  publisherUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   isDeleted: { type: Boolean, default: false, select: false },
 }, { timestamps: true });
 
@@ -88,6 +99,16 @@ ContentItemSchema.index(
 ContentItemSchema.index(
   { kind: 1, slug: 1 },
   { unique: true, partialFilterExpression: { slug: { $type: "string" } } },
+);
+ContentItemSchema.index(
+  { slugScope: 1, slug: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      slugScope: { $type: "string" },
+      slug: { $type: "string" },
+    },
+  },
 );
 
 const ContentItem: Model<ContentItemType> =

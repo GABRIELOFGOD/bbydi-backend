@@ -13,6 +13,9 @@ import Program from "../models/program";
 import Project from "../models/project";
 import StaffProfile from "../models/staffProfile";
 import { migrateBlogPosts } from "./migrateBlogPosts";
+import { migrateScreenshotPublications } from "./migrateScreenshotPublications";
+import { migratePublicationSlugs } from "./migratePublicationSlugs";
+import { migrateInnovationTools } from "./migrateInnovationTools";
 
 type LegacyContent = Omit<ContentItemType, "postedBy" | "approved" | "kind">;
 
@@ -66,13 +69,15 @@ const contentSeeds: { kind: ContentKind; entries: LegacyContent[] }[] = [
   },
   {
     kind: "publication",
-    entries: Publications.map((publication) => ({
+    entries: [
+      ...Publications.map((publication) => ({
       legacyKey: `publication-${publication.id}`,
       title: publication.title,
       description: publication.desc,
       summary: publication.desc,
       type: publication.text,
-    })),
+      })),
+    ],
   },
   {
     kind: "report",
@@ -157,6 +162,8 @@ export const migrateLegacyContent = async (): Promise<void> => {
     })));
   }
 
+  await migrateInnovationTools();
+
   const staffEntries = [
     ...AdminTeamData.map((person, index) => ({ person, category: "leadership" as const, key: `legacy-leadership-${index + 1}` })),
     ...StaffTeamData.map((person, index) => ({ person, category: "staff" as const, key: `legacy-staff-${index + 1}` })),
@@ -179,4 +186,6 @@ export const migrateLegacyContent = async (): Promise<void> => {
   })));
 
   await migrateBlogPosts();
+  await migrateScreenshotPublications();
+  await migratePublicationSlugs();
 };

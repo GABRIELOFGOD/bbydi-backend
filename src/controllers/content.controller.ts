@@ -8,6 +8,7 @@ import HTTP_STATUS from "../utils/statusCode";
 import mongoose from "mongoose";
 import User from "../models/user";
 import { sanitizeRichContent } from "../utils/sanitizeContent";
+import StaffProfile from "../models/staffProfile";
 
 const slugify = (value: string): string => value
   .normalize("NFKD")
@@ -18,18 +19,24 @@ const slugify = (value: string): string => value
   .slice(0, 100)
   .replace(/-+$/g, "");
 
-const uniqueNewsSlug = async (title: string, kind: "news" | "blog" = "news", excludeId?: mongoose.Types.ObjectId): Promise<string> => {
-  const baseSlug = slugify(title) || "news";
+const slugKinds = (kind: ContentKind): ContentKind[] =>
+  kind === "publication" || kind === "report" ? ["publication", "report"] : [kind];
+
+const slugScopeFor = (kind: ContentKind): string | undefined =>
+  kind === "publication" || kind === "report" ? "publications" : undefined;
+
+const uniqueContentSlug = async (title: string, kind: ContentKind, excludeId?: mongoose.Types.ObjectId): Promise<string> => {
+  const baseSlug = slugify(title) || kind;
   for (let suffix = 1; suffix <= 1000; suffix += 1) {
     const candidate = suffix === 1 ? baseSlug : `${baseSlug}-${suffix}`;
     const existing = await ContentItem.exists({
-      kind,
+      kind: { $in: slugKinds(kind) },
       slug: candidate,
       ...(excludeId ? { _id: { $ne: excludeId } } : {}),
     });
     if (!existing) return candidate;
   }
-  throw new Error("Could not generate a unique article URL");
+  throw new Error("Could not generate a unique content URL");
 };
 
 const legacyNewsSlug = (title: string, id: string): string =>
@@ -38,7 +45,19 @@ const legacyNewsSlug = (title: string, id: string): string =>
 const isDuplicateKeyError = (error: unknown): error is { code: number } =>
   typeof error === "object" && error !== null && "code" in error && error.code === 11000;
 
-const hasSlug = (kind: ContentKind): kind is "news" | "blog" => kind === "news" || kind === "blog";
+const hasSlug = (kind: ContentKind): boolean =>
+  kind === "news" || kind === "blog" || kind === "publication" || kind === "report";
+
+const hasDuplicateTitle = async (title: string, kind: ContentKind, excludeId?: mongoose.Types.ObjectId): Promise<boolean> => {
+  const normalizedTitle = title.trim().replace(/\s+/g, " ");
+  const escapedTitle = normalizedTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return Boolean(await ContentItem.exists({
+    kind: { $in: slugKinds(kind) },
+    title: { $regex: `^${escapedTitle}$`, $options: "i" },
+    ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+    isDeleted: { $ne: true },
+  }));
+};
 
 const contentPath = (kind: ContentKind): string => {
   const paths: Record<ContentKind, string> = {
@@ -50,6 +69,7 @@ const contentPath = (kind: ContentKind): string => {
     publication: "publications",
     blog: "blog",
     partner: "partners",
+    innovation: "innovations",
   };
   return `/dashboard/${paths[kind]}`;
 };
@@ -66,6 +86,45 @@ const uploadedFile = (req: Request, field: "image" | "document"): Express.Multer
 
 const isAdmin = (req: Request): boolean => req.user?.role === UserRole.ADMIN;
 
+const findPublisher = async (publisherId: unknown) => {
+  if (typeof publisherId !== "string" || !mongoose.isValidObjectId(publisherId)) return null;
+  return User.findOne({
+    _id: publisherId,
+    isBlocked: false,
+    role: { $in: [UserRole.ADMIN, UserRole.STAFF] },
+  }).select("name position avatar");
+};
+
+type PublisherWithAvatar = {
+  _id?: mongoose.Types.ObjectId | string;
+  avatar?: string;
+};
+
+const resolvePublisherAvatars = async <T extends { publisherUser?: PublisherWithAvatar | null }>(
+  items: T[],
+): Promise<T[]> => {
+  const publisherIds = items
+    .map((item) => item.publisherUser?._id?.toString())
+    .filter((id): id is string => Boolean(id));
+  if (publisherIds.length === 0) return items;
+
+  const profiles = await StaffProfile.find({ accountId: { $in: publisherIds } }).select("accountId image");
+  const imagesByAccountId = new Map<string, string>();
+  for (const profile of profiles) {
+    if (profile.accountId && profile.image) {
+      imagesByAccountId.set(profile.accountId.toString(), profile.image);
+    }
+  }
+
+  return items.map((item) => {
+    const publisher = item.publisherUser;
+    const publisherId = publisher?._id?.toString();
+    if (!publisher || publisher.avatar || !publisherId) return item;
+    const avatar = imagesByAccountId.get(publisherId);
+    return avatar ? { ...item, publisherUser: { ...publisher, avatar } } : item;
+  });
+};
+
 export const getPublicContent = catchAsync(async (req: Request, res: Response) => {
   const kind = getKind(req);
   if (!kind) return responder(res, HTTP_STATUS.NOT_FOUND, "Content type not found");
@@ -74,14 +133,22 @@ export const getPublicContent = catchAsync(async (req: Request, res: Response) =
     kind,
     approved: true,
     isDeleted: { $ne: true },
-  }).populate("postedBy", "name position avatar").sort({ sortOrder: 1, date: -1, createdAt: -1 });
+  })
+    .populate("postedBy", "name position avatar")
+    .populate("publisherUser", "name position avatar")
+    .sort({ sortOrder: 1, date: -1, createdAt: -1 });
+  const withPublisherFallback = items.map((item) => {
+    const content = item.toObject();
+    const { postedBy, ...publicContent } = content;
+    return { ...publicContent, publisherUser: content.publisherUser || postedBy };
+  });
   const publicItems = kind === "news" || kind === "blog"
-    ? items.map((item) => ({
-      ...item.toObject(),
+    ? withPublisherFallback.map((item) => ({
+      ...item,
       slug: item.slug || (kind === "news" ? legacyNewsSlug(item.title, item._id.toString()) : undefined),
     }))
-    : items;
-  return res.status(HTTP_STATUS.OK).json(publicItems);
+    : withPublisherFallback;
+  return res.status(HTTP_STATUS.OK).json(await resolvePublisherAvatars(publicItems));
 });
 
 export const getPublicContentBySlug = catchAsync(async (req: Request, res: Response) => {
@@ -113,12 +180,18 @@ export const getPublicContentBySlug = catchAsync(async (req: Request, res: Respo
     });
   }
   if (!item) return responder(res, HTTP_STATUS.NOT_FOUND, "Content not found");
-  if (item.postedBy) await item.populate("postedBy", "name position avatar");
+  await item.populate([
+    { path: "postedBy", select: "name position avatar" },
+    { path: "publisherUser", select: "name position avatar" },
+  ]);
   const response = item.toObject();
+  const { postedBy, ...publicResponse } = response;
+  publicResponse.publisherUser = response.publisherUser || postedBy;
   if (kind === "news" && !response.slug) {
-    response.slug = legacyNewsSlug(item.title, item._id.toString());
+    publicResponse.slug = legacyNewsSlug(item.title, item._id.toString());
   }
-  return res.status(HTTP_STATUS.OK).json(response);
+  const [resolvedResponse] = await resolvePublisherAvatars([publicResponse]);
+  return res.status(HTTP_STATUS.OK).json(resolvedResponse);
 });
 
 export const getAdminContent = catchAsync(async (req: Request, res: Response) => {
@@ -134,7 +207,8 @@ export const getAdminContent = catchAsync(async (req: Request, res: Response) =>
     isDeleted: { $ne: true },
     ...(!isAdmin(req) && userId ? { postedBy: userId } : {}),
   })
-    .populate("postedBy", "name email")
+    .populate("postedBy", "name email position avatar")
+    .populate("publisherUser", "name position avatar")
     .sort({ createdAt: -1 });
   const items = await query;
   const adminItems = kind === "news" || kind === "blog"
@@ -143,7 +217,11 @@ export const getAdminContent = catchAsync(async (req: Request, res: Response) =>
       slug: item.slug || (kind === "news" ? legacyNewsSlug(item.title, item._id.toString()) : undefined),
     }))
     : items;
-  return res.status(HTTP_STATUS.OK).json(adminItems);
+  const resolvedItems = adminItems.map((item) => {
+    if (item.publisherUser) return item;
+    return { ...item, publisherUser: item.postedBy };
+  });
+  return res.status(HTTP_STATUS.OK).json(resolvedItems);
 });
 
 export const createContent = catchAsync(async (req: Request, res: Response) => {
@@ -156,12 +234,18 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
   if (req.body.title.length > 200) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Title must be 200 characters or fewer");
   }
+  if (hasSlug(kind) && await hasDuplicateTitle(req.body.title, kind)) {
+    return responder(res, HTTP_STATUS.CONFLICT, "Content with this title already exists");
+  }
   if (req.body.description !== undefined &&
     (typeof req.body.description !== "string" || req.body.description.length > 100_000)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Description must be text no longer than 100,000 characters");
   }
   const boundedFields: Record<string, number> = {
     category: 80,
+    theme: 80,
+    language: 40,
+    series: 160,
     summary: 300,
     location: 120,
     publisher: 200,
@@ -189,25 +273,19 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
   if (req.body.featured !== undefined && ![true, false, "true", "false"].includes(req.body.featured)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Featured status must be true or false");
   }
+  if (req.body.posterId !== undefined) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Poster is determined by the authenticated uploader and cannot be changed");
+  }
   const imageFile = uploadedFile(req, "image");
   const documentFile = uploadedFile(req, "document");
-  let poster = req.user;
-  if (req.body.posterId !== undefined && !isAdmin(req)) {
+  if (req.body.publisherId !== undefined && !isAdmin(req)) {
     return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can choose another publisher");
   }
-  if (isAdmin(req) && req.body.posterId !== undefined && req.body.posterId !== req.user._id?.toString()) {
-    if (typeof req.body.posterId !== "string" || !mongoose.isValidObjectId(req.body.posterId)) {
-      return responder(res, HTTP_STATUS.BAD_REQUEST, "Please select a valid staff publisher");
-    }
-    const selectedPoster = await User.findOne({
-      _id: req.body.posterId,
-      role: UserRole.STAFF,
-      isBlocked: false,
-    });
-    if (!selectedPoster) {
-      return responder(res, HTTP_STATUS.BAD_REQUEST, "The selected publisher must be an active staff account");
-    }
-    poster = selectedPoster.toObject();
+  const selectedPublisher = req.body.publisherId === undefined
+    ? req.user
+    : await findPublisher(req.body.publisherId);
+  if (!selectedPublisher) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "The selected publisher must be an active staff or administrator account");
   }
   const contentDate = req.body.date ? new Date(req.body.date) : undefined;
   if (contentDate && Number.isNaN(contentDate.getTime())) {
@@ -221,13 +299,19 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
   const values: Partial<ContentItemType> = {
     kind,
     title: req.body.title.trim(),
-    ...(hasSlug(kind) ? { slug: await uniqueNewsSlug(req.body.title.trim(), kind) } : {}),
+    ...(hasSlug(kind) ? {
+      slug: await uniqueContentSlug(req.body.title.trim(), kind),
+      ...(slugScopeFor(kind) ? { slugScope: slugScopeFor(kind) } : {}),
+    } : {}),
     description: typeof req.body.description === "string"
       ? kind === "news" || kind === "blog" ? sanitizeRichContent(req.body.description) : req.body.description
       : undefined,
     context: req.body.context,
     summary: req.body.summary,
     category: req.body.category,
+    theme: req.body.theme,
+    language: req.body.language,
+    series: req.body.series,
     status: req.body.status,
     image: imageUrls[0] ?? req.body.image,
     imageCaption: req.body.imageCaption,
@@ -237,14 +321,15 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
     location: req.body.location,
     type: req.body.type,
     deadline: req.body.deadline,
-    publisher: poster.name,
+    publisher: selectedPublisher.name,
+    publisherUser: selectedPublisher._id,
     date: contentDate,
     document: documentUrls[0] ?? req.body.document,
     approved: req.body.approved === undefined
       ? true
       : req.body.approved === "true" || req.body.approved === true,
     featured: req.user.role === UserRole.STAFF || req.body.featured === true || req.body.featured === "true",
-    postedBy: poster._id,
+    postedBy: req.user._id,
   };
 
   let item: mongoose.HydratedDocument<ContentItemType>;
@@ -254,7 +339,10 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
       break;
     } catch (error) {
       if (!hasSlug(kind) || !isDuplicateKeyError(error) || attempt >= 4) throw error;
-      values.slug = await uniqueNewsSlug(req.body.title.trim(), kind);
+      if (await hasDuplicateTitle(req.body.title, kind)) {
+        return responder(res, HTTP_STATUS.CONFLICT, "Content with this title already exists");
+      }
+      values.slug = await uniqueContentSlug(req.body.title.trim(), kind);
     }
   }
   if (!item.approved && !isAdmin(req)) {
@@ -278,14 +366,20 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
   if (!isAdmin(req) && item.postedBy?.toString() !== req.user?._id?.toString()) {
     return responder(res, HTTP_STATUS.FORBIDDEN, "You can only edit your own posts");
   }
+  if (req.body.posterId !== undefined) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Poster is determined by the authenticated uploader and cannot be changed");
+  }
 
   const fields: (keyof ContentItemType)[] = [
     "title", "description", "context", "summary", "category", "status", "image",
-    "imageCaption", "link", "location", "type", "deadline", "document",
+    "imageCaption", "link", "location", "type", "deadline", "document", "theme", "language", "series",
   ];
   if (req.body.title !== undefined &&
     (typeof req.body.title !== "string" || !req.body.title.trim() || req.body.title.length > 200)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Title must be between 1 and 200 characters");
+  }
+  if (hasSlug(kind) && req.body.title !== undefined && await hasDuplicateTitle(req.body.title, kind, item._id)) {
+    return responder(res, HTTP_STATUS.CONFLICT, "Content with this title already exists");
   }
   if (req.body.description !== undefined &&
     (typeof req.body.description !== "string" || req.body.description.length > 100_000)) {
@@ -293,6 +387,9 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
   }
   const boundedFields: Record<string, number> = {
     category: 80,
+    theme: 80,
+    language: 40,
+    series: 160,
     summary: 300,
     location: 120,
     publisher: 200,
@@ -303,6 +400,20 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
       (typeof req.body[field] !== "string" || req.body[field].length > maxLength)) {
       return responder(res, HTTP_STATUS.BAD_REQUEST, `${field} must be text no longer than ${maxLength} characters`);
     }
+  }
+  if (req.body.publisherId !== undefined && !isAdmin(req)) {
+    return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can choose another publisher");
+  }
+  if (req.body.posterId !== undefined) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Poster is determined by the authenticated uploader and cannot be changed");
+  }
+  if (isAdmin(req) && req.body.publisherId !== undefined) {
+    const selectedPublisher = await findPublisher(req.body.publisherId);
+    if (!selectedPublisher) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "The selected publisher must be an active staff or administrator account");
+    }
+    item.publisherUser = selectedPublisher._id;
+    item.publisher = selectedPublisher.name;
   }
   if (req.body.approved !== undefined && ![true, false, "true", "false"].includes(req.body.approved)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Publication status must be true or false");
@@ -335,31 +446,11 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
     item.imageAlignment = req.body.imageAlignment;
   }
   if ((kind === "news" || kind === "blog") && req.body.title !== undefined) {
-    item.slug = await uniqueNewsSlug(req.body.title.trim(), kind, item._id);
-  } else if ((kind === "news" || kind === "blog") && !item.slug) {
-    item.slug = await uniqueNewsSlug(item.title, kind, item._id);
+    item.slug = await uniqueContentSlug(req.body.title.trim(), kind, item._id);
+  } else if (hasSlug(kind) && !item.slug) {
+    item.slug = await uniqueContentSlug(item.title, kind, item._id);
   }
-  if (isAdmin(req) && hasSlug(kind) && req.body.posterId !== undefined) {
-    if (typeof req.body.posterId !== "string" || !mongoose.isValidObjectId(req.body.posterId)) {
-      return responder(res, HTTP_STATUS.BAD_REQUEST, "Please select a valid staff publisher");
-    }
-    let selectedPoster;
-    if (req.body.posterId === req.user?._id?.toString()) {
-      selectedPoster = await User.findOne({ _id: req.body.posterId, role: UserRole.ADMIN });
-    } else {
-      selectedPoster = await User.findOne({
-        _id: req.body.posterId,
-        role: UserRole.STAFF,
-        isBlocked: false,
-      });
-    }
-    if (!selectedPoster) {
-      return responder(res, HTTP_STATUS.BAD_REQUEST, "The selected publisher must be the administrator or an active staff account");
-    }
-    item.postedBy = selectedPoster._id;
-    item.publisher = selectedPoster.name;
-  }
-
+  if (slugScopeFor(kind)) item.slugScope = slugScopeFor(kind);
   if (req.body.date !== undefined) {
     const parsedDate = req.body.date ? new Date(req.body.date) : undefined;
     if (parsedDate && Number.isNaN(parsedDate.getTime())) {
@@ -379,7 +470,14 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
   if (imageFile) item.image = (await fileUploader([imageFile]))[0];
   if (documentFile) item.document = (await fileUploader([documentFile], "raw"))[0];
 
-  await item.save();
+  try {
+    await item.save();
+  } catch (error) {
+    if (isDuplicateKeyError(error) && hasSlug(kind)) {
+      return responder(res, HTTP_STATUS.CONFLICT, "A publication with this title or URL already exists");
+    }
+    throw error;
+  }
   return res.status(HTTP_STATUS.OK).json({ message: "Content updated", data: item });
 });
 

@@ -263,6 +263,58 @@ export const Publications: LegacyPublication[] = [
   },
 ];
 
+export const ScreenshotPublications = [
+  {
+    id: "featured-manufactured-doubt",
+    title: "Manufactured Doubt: A Pre-Election Threat Assessment for Nigeria's 2027 General Elections.",
+    desc: "Examines Nigeria's digital threats ahead of the 2027 general elections, including misinformation, AI-generated content, and coordinated manipulation, with analysis of state-level hotspots and recommendations for electoral integrity.",
+    type: "Research report",
+    theme: "Elections",
+    date: "2026-01-01",
+    featured: true,
+  },
+  {
+    id: "closing-indigenous-language-detection-gap",
+    title: "Closing the Indigenous-Language Detection Gap",
+    desc: "Policy brief on strengthening the detection of harmful and misleading content in indigenous Nigerian languages.",
+    type: "Policy brief",
+    theme: "Digital rights",
+    date: "2026-01-01",
+  },
+  {
+    id: "nigerian-women-politics-digital-defence-helpline",
+    title: "Nigerian Women in Politics Digital Defence Helpline",
+    desc: "A policy brief on practical digital safety and response support for women participating in Nigerian politics.",
+    type: "Policy brief",
+    theme: "Gender justice",
+    date: "2026-01-01",
+  },
+  {
+    id: "online-gbv-nigeria-evidence-gaps-priorities",
+    title: "Online Gender-Based Violence in Nigeria: Evidence, Gaps and Priorities for Reform",
+    desc: "Evidence and policy priorities for understanding and responding to online gender-based violence in Nigeria.",
+    type: "Policy brief",
+    theme: "Gender justice",
+    date: "2026-01-01",
+  },
+  {
+    id: "operationalising-inec-ai-division-2027",
+    title: "Operationalising INEC's Artificial Intelligence Division for 2027",
+    desc: "A policy brief on institutional readiness and the responsible use of artificial intelligence in election administration.",
+    type: "Policy brief",
+    theme: "Elections",
+    date: "2026-01-01",
+  },
+  {
+    id: "silenced-at-the-ballot-osun-2026",
+    title: "Silenced at the Ballot: Gendered Violence and Disinformation in the 2026 Osun Governorship Election",
+    desc: "A policy brief examining gendered violence and disinformation affecting political participation in the 2026 Osun governorship election.",
+    type: "Policy brief",
+    theme: "Elections",
+    date: "2026-01-01",
+  },
+];
+
 type LegacyOpportunity = {
   id: string;
   title: string;

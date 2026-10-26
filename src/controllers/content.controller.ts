@@ -211,12 +211,13 @@ export const getAdminContent = catchAsync(async (req: Request, res: Response) =>
     .populate("publisherUser", "name position avatar")
     .sort({ createdAt: -1 });
   const items = await query;
-  const adminItems = kind === "news" || kind === "blog"
-    ? items.map((item) => ({
-      ...item.toObject(),
-      slug: item.slug || (kind === "news" ? legacyNewsSlug(item.title, item._id.toString()) : undefined),
-    }))
-    : items;
+  const adminItems = items.map((item) => {
+    const content = item.toObject();
+    if ((kind === "news" || kind === "blog") && !content.slug) {
+      content.slug = kind === "news" ? legacyNewsSlug(content.title, content._id.toString()) : undefined;
+    }
+    return content;
+  });
   const resolvedItems = adminItems.map((item) => {
     if (item.publisherUser) return item;
     return { ...item, publisherUser: item.postedBy };

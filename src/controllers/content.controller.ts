@@ -42,11 +42,32 @@ const uniqueContentSlug = async (title: string, kind: ContentKind, excludeId?: m
 const legacyNewsSlug = (title: string, id: string): string =>
   `${slugify(title) || "news"}-${id.slice(-6)}`;
 
+const legacyProjectSlug = (title: string, id: string): string =>
+  `${slugify(title) || "project"}-${id.slice(-6)}`;
+
 const isDuplicateKeyError = (error: unknown): error is { code: number } =>
   typeof error === "object" && error !== null && "code" in error && error.code === 11000;
 
 const hasSlug = (kind: ContentKind): boolean =>
-  kind === "news" || kind === "blog" || kind === "publication" || kind === "report";
+  kind === "news" || kind === "blog" || kind === "publication" || kind === "report" || kind === "project";
+
+const parseListField = (value: unknown, separator = /,/): string[] | null => {
+  if (typeof value !== "string") return null;
+  return [...new Set(value.split(separator).map((entry) => entry.trim()).filter(Boolean))];
+};
+
+const validRegisterFlag = (value: unknown): boolean =>
+  value === true || value === false || value === "true" || value === "false";
+
+const isValidExternalUrl = (value: unknown): value is string => {
+  if (typeof value !== "string" || value.length > 2048) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 const hasDuplicateTitle = async (title: string, kind: ContentKind, excludeId?: mongoose.Types.ObjectId): Promise<boolean> => {
   const normalizedTitle = title.trim().replace(/\s+/g, " ");
@@ -147,6 +168,11 @@ export const getPublicContent = catchAsync(async (req: Request, res: Response) =
       ...item,
       slug: item.slug || (kind === "news" ? legacyNewsSlug(item.title, item._id.toString()) : undefined),
     }))
+    : kind === "project"
+      ? withPublisherFallback.map((item) => ({
+        ...item,
+        slug: item.slug || legacyProjectSlug(item.title, item._id.toString()),
+      }))
     : withPublisherFallback;
   return res.status(HTTP_STATUS.OK).json(await resolvePublisherAvatars(publicItems));
 });
@@ -171,6 +197,17 @@ export const getPublicContentBySlug = catchAsync(async (req: Request, res: Respo
       legacyNewsSlug(candidate.title, candidate._id.toString()) === req.params.slug,
     ) ?? null;
   }
+  if (!item && kind === "project") {
+    const publishedProjects = await ContentItem.find({
+      kind: "project",
+      approved: true,
+      isDeleted: { $ne: true },
+      slug: { $exists: false },
+    });
+    item = publishedProjects.find((candidate) =>
+      legacyProjectSlug(candidate.title, candidate._id.toString()) === req.params.slug,
+    ) ?? null;
+  }
   if (!item && kind !== "blog" && mongoose.isValidObjectId(req.params.slug)) {
     item = await ContentItem.findOne({
       _id: req.params.slug,
@@ -189,6 +226,9 @@ export const getPublicContentBySlug = catchAsync(async (req: Request, res: Respo
   publicResponse.publisherUser = response.publisherUser || postedBy;
   if (kind === "news" && !response.slug) {
     publicResponse.slug = legacyNewsSlug(item.title, item._id.toString());
+  }
+  if (kind === "project" && !response.slug) {
+    publicResponse.slug = legacyProjectSlug(item.title, item._id.toString());
   }
   const [resolvedResponse] = await resolvePublisherAvatars([publicResponse]);
   return res.status(HTTP_STATUS.OK).json(resolvedResponse);
@@ -229,13 +269,16 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
   const kind = getKind(req);
   if (!kind) return responder(res, HTTP_STATUS.NOT_FOUND, "Content type not found");
   if (!req.user) return responder(res, HTTP_STATUS.UNAUTHORIZED, "Please login to perform this operation");
+  if (req.body.homepageFeatured !== undefined) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Use the homepage feature action to feature publications");
+  }
   if (typeof req.body.title !== "string" || !req.body.title.trim()) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Please enter a title");
   }
   if (req.body.title.length > 200) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Title must be 200 characters or fewer");
   }
-  if (hasSlug(kind) && await hasDuplicateTitle(req.body.title, kind)) {
+  if (kind !== "project" && hasSlug(kind) && await hasDuplicateTitle(req.body.title, kind)) {
     return responder(res, HTTP_STATUS.CONFLICT, "Content with this title already exists");
   }
   if (req.body.description !== undefined &&
@@ -251,6 +294,8 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
     location: 120,
     publisher: 200,
     imageCaption: 240,
+    period: 120,
+    funder: 200,
   };
   for (const [field, maxLength] of Object.entries(boundedFields)) {
     if (req.body[field] !== undefined &&
@@ -274,6 +319,37 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
   if (req.body.featured !== undefined && ![true, false, "true", "false"].includes(req.body.featured)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Featured status must be true or false");
   }
+  if (req.body.on2026Register !== undefined && !validRegisterFlag(req.body.on2026Register)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "2026 register status must be true or false");
+  }
+  const thematicAreas = req.body.thematicAreas === undefined
+    ? []
+    : parseListField(req.body.thematicAreas, /\r?\n/);
+  if (thematicAreas === null || thematicAreas.some((area) => area.length > 100)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Thematic areas must be a newline-separated list of up to 100-character labels");
+  }
+  const relatedProjectIds = req.body.relatedProjectIds === undefined
+    ? []
+    : parseListField(req.body.relatedProjectIds);
+  if (relatedProjectIds === null || relatedProjectIds.some((id) => !mongoose.isValidObjectId(id))) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Related projects must be a comma-separated list of project IDs");
+  }
+  if (thematicAreas.length > 0 && kind !== "project") {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Thematic areas can only be set on projects");
+  }
+  if (relatedProjectIds.length > 0 && kind !== "publication") {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Related projects can only be set on publications");
+  }
+  if (relatedProjectIds.length > 0) {
+    const projectCount = await ContentItem.countDocuments({
+      _id: { $in: relatedProjectIds },
+      kind: "project",
+      isDeleted: { $ne: true },
+    });
+    if (projectCount !== relatedProjectIds.length) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "One or more selected projects could not be found");
+    }
+  }
   if (req.body.posterId !== undefined) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Poster is determined by the authenticated uploader and cannot be changed");
   }
@@ -291,6 +367,27 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
   const contentDate = req.body.date ? new Date(req.body.date) : undefined;
   if (contentDate && Number.isNaN(contentDate.getTime())) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Please provide a valid date");
+  }
+  const newsType = req.body.newsType ?? "internal";
+  if (kind === "news" && !["internal", "external"].includes(newsType)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "News type must be internal or external");
+  }
+  if (kind === "news" && req.body.sourceName !== undefined &&
+    (typeof req.body.sourceName !== "string" || req.body.sourceName.length > 120)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Source name must be text no longer than 120 characters");
+  }
+  if (kind === "news" && newsType === "external") {
+    if (typeof req.body.description !== "string" || !req.body.description.trim()) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "External news must include the supplied article excerpt");
+    }
+    if (typeof req.body.sourceName !== "string" || !req.body.sourceName.trim()) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "External news must include the source publication name");
+    }
+    if (!isValidExternalUrl(req.body.sourceUrl)) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "External news must include a valid HTTP or HTTPS source URL");
+    }
+  } else if (kind === "news" && req.body.sourceUrl && !isValidExternalUrl(req.body.sourceUrl)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Source URL must be a valid HTTP or HTTPS URL");
   }
   const [imageUrls, documentUrls] = await Promise.all([
     imageFile ? fileUploader([imageFile]) : Promise.resolve([]),
@@ -314,6 +411,13 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
     language: req.body.language,
     series: req.body.series,
     status: req.body.status,
+    period: req.body.period,
+    funder: req.body.funder,
+    thematicAreas: kind === "project" ? thematicAreas : undefined,
+    on2026Register: kind === "project"
+      ? req.body.on2026Register === true || req.body.on2026Register === "true"
+      : undefined,
+    relatedProjectIds: kind === "publication" ? relatedProjectIds : undefined,
     image: imageUrls[0] ?? req.body.image,
     imageCaption: req.body.imageCaption,
     imageWidth: req.body.imageWidth === undefined ? undefined : Number(req.body.imageWidth),
@@ -324,6 +428,11 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
     deadline: req.body.deadline,
     publisher: selectedPublisher.name,
     publisherUser: selectedPublisher._id,
+    ...(kind === "news" ? {
+      newsType,
+      sourceName: typeof req.body.sourceName === "string" ? req.body.sourceName.trim() : undefined,
+      sourceUrl: typeof req.body.sourceUrl === "string" ? req.body.sourceUrl.trim() : undefined,
+    } : {}),
     date: contentDate,
     document: documentUrls[0] ?? req.body.document,
     approved: req.body.approved === undefined
@@ -340,7 +449,7 @@ export const createContent = catchAsync(async (req: Request, res: Response) => {
       break;
     } catch (error) {
       if (!hasSlug(kind) || !isDuplicateKeyError(error) || attempt >= 4) throw error;
-      if (await hasDuplicateTitle(req.body.title, kind)) {
+      if (kind !== "project" && await hasDuplicateTitle(req.body.title, kind)) {
         return responder(res, HTTP_STATUS.CONFLICT, "Content with this title already exists");
       }
       values.slug = await uniqueContentSlug(req.body.title.trim(), kind);
@@ -370,16 +479,20 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
   if (req.body.posterId !== undefined) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Poster is determined by the authenticated uploader and cannot be changed");
   }
+  if (req.body.homepageFeatured !== undefined) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Use the homepage feature action to feature publications");
+  }
 
   const fields: (keyof ContentItemType)[] = [
     "title", "description", "context", "summary", "category", "status", "image",
     "imageCaption", "link", "location", "type", "deadline", "document", "theme", "language", "series",
+    "period", "funder", "sourceUrl", "newsType", "sourceName",
   ];
   if (req.body.title !== undefined &&
     (typeof req.body.title !== "string" || !req.body.title.trim() || req.body.title.length > 200)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Title must be between 1 and 200 characters");
   }
-  if (hasSlug(kind) && req.body.title !== undefined && await hasDuplicateTitle(req.body.title, kind, item._id)) {
+  if (kind !== "project" && hasSlug(kind) && req.body.title !== undefined && await hasDuplicateTitle(req.body.title, kind, item._id)) {
     return responder(res, HTTP_STATUS.CONFLICT, "Content with this title already exists");
   }
   if (req.body.description !== undefined &&
@@ -395,11 +508,24 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
     location: 120,
     publisher: 200,
     imageCaption: 240,
+    period: 120,
+    funder: 200,
   };
   for (const [field, maxLength] of Object.entries(boundedFields)) {
     if (req.body[field] !== undefined &&
       (typeof req.body[field] !== "string" || req.body[field].length > maxLength)) {
       return responder(res, HTTP_STATUS.BAD_REQUEST, `${field} must be text no longer than ${maxLength} characters`);
+    }
+    if (req.body.sourceName !== undefined &&
+      (typeof req.body.sourceName !== "string" || req.body.sourceName.length > 120)) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Source name must be text no longer than 120 characters");
+    }
+    if (req.body.sourceUrl !== undefined && req.body.sourceUrl !== "" && !isValidExternalUrl(req.body.sourceUrl)) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Source URL must be a valid HTTP or HTTPS URL");
+    }
+    if (req.body.newsType !== undefined &&
+      (kind !== "news" || !["internal", "external"].includes(req.body.newsType))) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "News type must be internal or external");
     }
   }
   if (req.body.publisherId !== undefined && !isAdmin(req)) {
@@ -422,6 +548,45 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
   if (req.body.featured !== undefined && ![true, false, "true", "false"].includes(req.body.featured)) {
     return responder(res, HTTP_STATUS.BAD_REQUEST, "Featured status must be true or false");
   }
+  if (req.body.on2026Register !== undefined && !validRegisterFlag(req.body.on2026Register)) {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "2026 register status must be true or false");
+  }
+  if (req.body.thematicAreas !== undefined) {
+    if (kind !== "project") {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Thematic areas can only be set on projects");
+    }
+    const thematicAreas = parseListField(req.body.thematicAreas, /\r?\n/);
+    if (thematicAreas === null || thematicAreas.some((area) => area.length > 100)) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Thematic areas must be a newline-separated list of up to 100-character labels");
+    }
+    item.thematicAreas = thematicAreas;
+  }
+  if (req.body.on2026Register !== undefined) {
+    if (kind !== "project") {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "2026 register status can only be set on projects");
+    }
+    item.on2026Register = req.body.on2026Register === true || req.body.on2026Register === "true";
+  }
+  if (req.body.relatedProjectIds !== undefined) {
+    if (kind !== "publication") {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Related projects can only be set on publications");
+    }
+    const relatedProjectIds = parseListField(req.body.relatedProjectIds);
+    if (relatedProjectIds === null || relatedProjectIds.some((id) => !mongoose.isValidObjectId(id))) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Related projects must be a comma-separated list of project IDs");
+    }
+    if (relatedProjectIds.length > 0) {
+      const projectCount = await ContentItem.countDocuments({
+        _id: { $in: relatedProjectIds },
+        kind: "project",
+        isDeleted: { $ne: true },
+      });
+      if (projectCount !== relatedProjectIds.length) {
+        return responder(res, HTTP_STATUS.BAD_REQUEST, "One or more selected projects could not be found");
+      }
+    }
+    item.relatedProjectIds = relatedProjectIds;
+  }
   for (const field of fields) {
     if (req.body[field] !== undefined) {
       if (field === "description" && (kind === "news" || kind === "blog")) {
@@ -430,6 +595,20 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
         (item[field] as string | undefined) = req.body[field];
       } else {
         return responder(res, HTTP_STATUS.BAD_REQUEST, `${field} must be text`);
+      }
+      if (kind === "news") {
+        const newsType = item.newsType ?? "internal";
+        if (newsType === "external") {
+          if (!item.description?.trim()) {
+            return responder(res, HTTP_STATUS.BAD_REQUEST, "External news must include the supplied article excerpt");
+          }
+          if (!item.sourceName?.trim()) {
+            return responder(res, HTTP_STATUS.BAD_REQUEST, "External news must include the source publication name");
+          }
+          if (!isValidExternalUrl(item.sourceUrl)) {
+            return responder(res, HTTP_STATUS.BAD_REQUEST, "External news must include a valid HTTP or HTTPS source URL");
+          }
+        }
       }
     }
   }
@@ -480,6 +659,69 @@ export const updateContent = catchAsync(async (req: Request, res: Response) => {
     throw error;
   }
   return res.status(HTTP_STATUS.OK).json({ message: "Content updated", data: item });
+});
+
+export const setHomepageFeature = catchAsync(async (req: Request, res: Response) => {
+  const kind = getKind(req);
+  if (kind !== "publication" && kind !== "report") {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Only publications and reports can be featured on the homepage");
+  }
+  if (!isAdmin(req)) return responder(res, HTTP_STATUS.FORBIDDEN, "Only administrators can feature homepage publications");
+  if (typeof req.body.featured !== "boolean") {
+    return responder(res, HTTP_STATUS.BAD_REQUEST, "Homepage feature status must be true or false");
+  }
+
+  const item = await ContentItem.findOne({
+    _id: req.params.id,
+    kind,
+    approved: true,
+    isDeleted: { $ne: true },
+  });
+  if (!item) return responder(res, HTTP_STATUS.NOT_FOUND, "Published content not found");
+
+  if (!req.body.featured) {
+    item.homepageFeatured = false;
+    await item.save();
+    return res.status(HTTP_STATUS.OK).json({ message: "Homepage feature removed", data: item });
+  }
+
+  if (item.homepageFeatured) {
+    return res.status(HTTP_STATUS.OK).json({ message: "Publication is already featured", data: item });
+  }
+
+  const featuredItems = await ContentItem.find({
+    kind: { $in: ["publication", "report"] },
+    homepageFeatured: true,
+    approved: true,
+    isDeleted: { $ne: true },
+  }).select("_id kind title");
+  let replacement: (typeof featuredItems)[number] | undefined;
+
+  if (featuredItems.length >= 4) {
+    const replacementId = req.body.replaceId;
+    if (typeof replacementId !== "string" || !mongoose.isValidObjectId(replacementId)) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "Choose a featured publication to replace before adding another");
+    }
+    replacement = featuredItems.find((featuredItem) => featuredItem._id.toString() === replacementId);
+    if (!replacement) {
+      return responder(res, HTTP_STATUS.BAD_REQUEST, "The selected publication is not currently featured");
+    }
+    replacement.homepageFeatured = false;
+    await replacement.save();
+  }
+
+  item.homepageFeatured = true;
+  try {
+    await item.save();
+  } catch (error) {
+    if (replacement) {
+      replacement.homepageFeatured = true;
+      await replacement.save();
+    }
+    throw error;
+  }
+
+  return res.status(HTTP_STATUS.OK).json({ message: "Homepage publication featured", data: item });
 });
 
 export const setContentApproval = catchAsync(async (req: Request, res: Response) => {

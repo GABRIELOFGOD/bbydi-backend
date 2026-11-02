@@ -29,12 +29,18 @@ export type ContentItemType = {
   language?: string;
   series?: string;
   status?: string;
+  period?: string;
+  funder?: string;
+  thematicAreas?: string[];
+  on2026Register?: boolean;
+  relatedProjectIds?: string[];
   image?: string;
   imageCaption?: string;
   imageAlt?: string;
   imageWidth?: number;
   imageAlignment?: "left" | "center" | "right";
   featured?: boolean;
+  homepageFeatured?: boolean;
   link?: string;
   location?: string;
   type?: string;
@@ -45,6 +51,8 @@ export type ContentItemType = {
   wordCount?: number;
   tags?: string[];
   sourceUrl?: string;
+  newsType?: "internal" | "external";
+  sourceName?: string;
   date?: Date;
   document?: string;
   approved: boolean;
@@ -68,12 +76,18 @@ const ContentItemSchema = new Schema<ContentItemType>({
   language: String,
   series: String,
   status: String,
+  period: String,
+  funder: String,
+  thematicAreas: [String],
+  on2026Register: Boolean,
+  relatedProjectIds: [String],
   image: String,
   imageCaption: String,
   imageAlt: String,
   imageWidth: { type: Number, min: 25, max: 100, default: 100 },
   imageAlignment: { type: String, enum: ["left", "center", "right"], default: "center" },
   featured: { type: Boolean, default: false },
+  homepageFeatured: { type: Boolean, default: false },
   link: String,
   location: String,
   type: String,
@@ -84,6 +98,8 @@ const ContentItemSchema = new Schema<ContentItemType>({
   wordCount: Number,
   tags: [String],
   sourceUrl: String,
+  newsType: { type: String, enum: ["internal", "external"] },
+  sourceName: String,
   date: Date,
   document: String,
   approved: { type: Boolean, default: false },

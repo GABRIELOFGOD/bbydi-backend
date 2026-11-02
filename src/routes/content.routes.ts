@@ -13,6 +13,7 @@ import {
   getPublicContent,
   getPublicContentBySlug,
   setContentApproval,
+  setHomepageFeature,
   updateContent,
   uploadNewsImage,
 } from "../controllers/content.controller";
@@ -49,6 +50,7 @@ router.get("/:kind", getPublicContent);
 router.post("/:kind/images", authMiddleware, authorizeRoles(UserRole.ADMIN, UserRole.STAFF), contentUpload.single("image"), uploadNewsImage);
 router.post("/:kind", authMiddleware, authorizeRoles(UserRole.ADMIN, UserRole.STAFF), contentFiles, createContent);
 router.patch("/:kind/:id/approval", authMiddleware, authorizeRoles(UserRole.ADMIN, UserRole.STAFF), setContentApproval);
+router.patch("/:kind/:id/homepage-featured", authMiddleware, authorizeRoles(UserRole.ADMIN), setHomepageFeature);
 router.patch("/:kind/:id", authMiddleware, authorizeRoles(UserRole.ADMIN, UserRole.STAFF), authorizeContentOwner, contentFiles, updateContent);
 router.delete("/:kind/:id", authMiddleware, authorizeRoles(UserRole.ADMIN), deleteContent);
 
